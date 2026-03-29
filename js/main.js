@@ -962,4 +962,32 @@ async function init() {
     if (typeof startPricePolling === 'function') startPricePolling(_pollPrice);
 }
 
+// ── Wrap number inputs with custom +/- buttons ──────────────────────────────
+function _wrapNumberInputs() {
+    document.querySelectorAll('.si-field input[type=number], .si-trigger-row input[type=number], .si-alloc-item input[type=number]').forEach(inp => {
+        if (inp.closest('.num-wrap')) return; // already wrapped
+        const wrap = document.createElement('span');
+        wrap.className = 'num-wrap';
+        wrap.style.display = 'inline-flex';
+        wrap.style.width = inp.style.width || '';
+        inp.parentNode.insertBefore(wrap, inp);
+        wrap.appendChild(inp);
+
+        const btns = document.createElement('span');
+        btns.className = 'num-btns';
+        btns.innerHTML = '<button type="button" tabindex="-1">\u25B2</button><button type="button" tabindex="-1">\u25BC</button>';
+        wrap.appendChild(btns);
+
+        btns.children[0].addEventListener('click', () => {
+            inp.stepUp();
+            inp.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        btns.children[1].addEventListener('click', () => {
+            inp.stepDown();
+            inp.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+}
+
 init();
+_wrapNumberInputs();

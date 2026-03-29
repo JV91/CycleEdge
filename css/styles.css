@@ -1,4 +1,5 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
 
 body {
     background: #07070d;
@@ -385,6 +386,99 @@ input[type=range]::-moz-range-thumb {
     border: 2px solid #07070d;
     cursor: pointer;
 }
+
+/* ── Number input spinners (dark mode) ── */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    position: relative;
+}
+
+/* Custom +/- buttons via wrapper — see .num-wrap in JS */
+.num-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+}
+.num-wrap input[type=number] {
+    padding-right: 28px;
+}
+.num-wrap .num-btns {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    width: 22px;
+    border-left: 1px solid #2a2a42;
+}
+.num-btns button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 0.55rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+}
+.num-btns button:hover {
+    color: #f7931a;
+    background: rgba(247,147,26,.1);
+}
+.num-btns button:first-child {
+    border-bottom: 1px solid #2a2a42;
+    border-radius: 0 6px 0 0;
+}
+.num-btns button:last-child {
+    border-radius: 0 0 6px 0;
+}
+
+/* ── Date / month inputs (dark mode) ── */
+input[type=month],
+input[type=date] {
+    color-scheme: dark;
+}
+input[type=month]::-webkit-calendar-picker-indicator,
+input[type=date]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(1) saturate(3) hue-rotate(5deg);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+input[type=month]::-webkit-calendar-picker-indicator:hover,
+input[type=date]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+[data-theme="light"] input[type=month],
+[data-theme="light"] input[type=date] {
+    color-scheme: light;
+}
+[data-theme="light"] input[type=month]::-webkit-calendar-picker-indicator,
+[data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator {
+    filter: none;
+}
+[data-theme="light"] .num-btns {
+    border-left-color: #c8c8e0;
+}
+[data-theme="light"] .num-btns button:first-child {
+    border-bottom-color: #c8c8e0;
+}
+[data-theme="light"] .num-btns button { color: #999; }
+[data-theme="light"] .num-btns button:hover { color: #f7931a; background: rgba(247,147,26,.08); }
 
 .perf-row {
     display: grid;
@@ -1371,4 +1465,239 @@ footer {
 .alert-toast.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Mobile-first breakpoints
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet & below (≤ 768px) ── */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px 12px 36px;
+    }
+
+    /* Header: stack logo left, auth right, shrink sizes */
+    header {
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+    .header-logo h1 { font-size: 1.15rem; }
+    .header-sub { font-size: 0.55rem; }
+    .header-user { max-width: 120px; font-size: 0.65rem; padding: 3px 6px; }
+    .signal-badge { padding: 4px 10px; font-size: 0.65rem; letter-spacing: 1.5px; }
+
+    /* Stats bar: 2 columns */
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .stat { padding: 10px 12px; border-radius: 10px; }
+    .stat .value { font-size: 0.95rem; }
+    .stat .label { font-size: 0.62rem; }
+
+    /* Panels */
+    .panel {
+        border-radius: 14px;
+        padding: 14px 12px 12px;
+        margin-bottom: 10px;
+    }
+
+    /* Panel headers: stack title and controls */
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .panel-header > div:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .panel-title { font-size: 0.65rem; letter-spacing: 1px; }
+
+    /* Toggle / reset buttons: smaller */
+    .reset-btn, .toggle-btn {
+        font-size: 0.65rem;
+        padding: 3px 9px;
+    }
+
+    /* Charts: reduced height for mobile */
+    .chart-box.price-box { height: 320px; }
+    .chart-box.ind-box { height: 150px; }
+    .si-chart-box { height: 200px; }
+    .port-dev-chart-box { height: 160px; }
+
+    /* Strategy params: single column */
+    .params-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* Preset slider labels */
+    .preset-top { flex-direction: column; gap: 2px; }
+    .preset-top .orig, .preset-top .rec { font-size: 0.7rem; }
+    .preset-sublabels { flex-direction: column; gap: 2px; }
+    .preset-sublabels span { font-size: 0.6rem; }
+
+    /* Performance row: 2 columns */
+    .perf-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .pstat { padding: 8px 10px; border-radius: 8px; }
+    .pstat .plabel { font-size: 0.6rem; }
+    .pstat .pvalue { font-size: 0.9rem; }
+
+    /* SI inputs: 2-col on tablet, 1-col on phone (see below) */
+    .si-inputs {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px 14px;
+    }
+    .si-field label { font-size: 0.62rem; }
+
+    /* Allocation row: single column */
+    .si-alloc-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 10px 12px;
+    }
+
+    /* SI stats: 2 columns */
+    .si-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .si-stat { padding: 8px 10px; }
+    .si-stat .sl { font-size: 0.6rem; }
+    .si-stat .sv { font-size: 0.88rem; }
+
+    /* Triggers: allow wrapping */
+    .si-triggers { padding: 10px 12px; }
+    .si-triggers-title { font-size: 0.62rem; }
+    .si-trigger-row {
+        gap: 6px;
+        font-size: 0.7rem;
+    }
+    .si-trigger-row input[type=number] { width: 72px; font-size: 0.78rem; padding: 4px 6px; }
+    .si-trigger-row input[type=month] { font-size: 0.78rem; padding: 4px 6px; }
+
+    /* Table: horizontal scroll, ensure it works */
+    .si-table-wrap, .port-table-wrap { -webkit-overflow-scrolling: touch; }
+    .si-table { font-size: 0.68rem; }
+    .si-table th, .si-table td { padding: 5px 7px; }
+
+    /* Info box / How it works */
+    .info-box { padding: 14px; border-radius: 14px; }
+    .steps { grid-template-columns: 1fr; gap: 10px; }
+    .legend-row { gap: 12px; }
+    .legend-item { font-size: 0.7rem; }
+
+    /* Yearly returns chart */
+    .chart-box[style*="height:230px"] { height: 180px !important; }
+
+    /* Save/Load row */
+    .si-save-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        padding: 10px 12px;
+    }
+    .si-save-row input[type=text] { width: 100% !important; }
+
+    /* Portfolio form */
+    .port-add-row { flex-direction: column; }
+    .port-field { width: 100%; }
+    .port-field input, .port-field select { width: 100%; min-width: unset; }
+    .port-field-wide input { min-width: unset; }
+    .port-stats-row { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+    /* Auth modal */
+    .auth-modal-inner { padding: 24px 20px 20px; width: 95vw; }
+
+    /* Settings modal */
+    .settings-inner { padding: 24px 20px 20px; width: 95vw; }
+
+    /* Footer */
+    footer { font-size: 0.65rem; margin-top: 20px; }
+
+    /* Scroll to top / alert toast */
+    #scrollTopBtn { bottom: 20px; right: 16px; width: 32px; height: 32px; font-size: 0.85rem; }
+    .alert-toast { right: 12px; bottom: 16px; max-width: calc(100vw - 24px); font-size: 0.78rem; }
+}
+
+/* Prevent iOS zoom on input focus (requires 16px minimum) */
+@media (max-width: 768px) {
+    input[type=number],
+    input[type=text],
+    input[type=email],
+    input[type=password],
+    input[type=month],
+    input[type=date],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* ── Phone (≤ 480px) ── */
+@media (max-width: 480px) {
+    .container { padding: 12px 8px 28px; }
+
+    /* Header: tighter */
+    header { gap: 8px; margin-bottom: 12px; }
+    .header-left { gap: 10px; }
+    .header-logo { gap: 7px; }
+    .header-logo svg { width: 22px; height: 22px; }
+    .header-logo h1 { font-size: 1rem; }
+    .header-user { display: none !important; }
+    .auth-btn { font-size: 0.65rem; padding: 5px 12px; }
+
+    /* Stats bar: still 2 cols but tighter */
+    .stats-bar { gap: 4px; }
+    .stat { padding: 8px 10px; }
+    .stat .value { font-size: 0.85rem; }
+
+    /* Panels: less padding */
+    .panel { padding: 12px 10px 10px; border-radius: 12px; }
+
+    /* Charts: smaller */
+    .chart-box.price-box { height: 260px; }
+    .chart-box.ind-box { height: 130px; }
+    .si-chart-box { height: 170px; }
+
+    /* SI inputs: single column */
+    .si-inputs { grid-template-columns: 1fr; gap: 8px; }
+
+    /* Perf row: single column on very small screens */
+    .perf-row { grid-template-columns: 1fr; }
+
+    /* SI stats: single column */
+    .si-stats { grid-template-columns: 1fr; }
+
+    /* Trigger rows: stack vertically */
+    .si-trigger-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 8px 0;
+        border-bottom: 1px solid #1a1a2e;
+    }
+    .si-trigger-row:last-child { border-bottom: none; }
+    .si-trigger-row input[type=number],
+    .si-trigger-row input[type=month] {
+        width: 100%;
+    }
+
+    /* Alloc items: stack */
+    .si-alloc-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+
+    /* Portfolio stats: single column */
+    .port-stats-row { grid-template-columns: 1fr; }
+
+    /* Number wrap: full width in stacked triggers */
+    .si-trigger-row .num-wrap { width: 100%; }
+    .si-trigger-row .num-wrap input[type=number] { width: 100%; }
 }
