@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CycleEdge — BTC Strategy</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <div class="header-left">
+            <div class="header-logo">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="14" cy="14" r="13" stroke="#f7931a" stroke-width="1.5" fill="none"/>
+                    <path d="M5 19 Q9 8 14 10 Q19 12 23 5" stroke="#f7931a" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <circle cx="14" cy="10" r="2" fill="#f7931a" opacity="0.6"/>
+                    <path d="M20 18 L23 15 L26 18" stroke="#00cc66" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                    <h1>CycleEdge</h1>
+                    <span class="header-sub">BTC Cycle Strategy</span>
+                </div>
+            </div>
+            <div class="signal-badge init" id="signalBadge">—</div>
+        </div>
+        <div class="header-right">
+            <span class="header-user" id="headerUser" style="display:none"></span>
+            <button id="authBtn" class="auth-btn">Log in</button>
+        </div>
+    </header>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal" style="display:none">
+        <div class="auth-modal-inner">
+            <button id="authModalClose" class="auth-close">×</button>
+
+            <!-- Logo + title -->
+            <div class="auth-brand">
+                <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="14" cy="14" r="13" stroke="#f7931a" stroke-width="1.5" fill="none"/>
+                    <path d="M5 19 Q9 8 14 10 Q19 12 23 5" stroke="#f7931a" stroke-width="2" fill="none" stroke-linecap="round"/>
+                    <circle cx="14" cy="10" r="2" fill="#f7931a" opacity="0.6"/>
+                    <path d="M20 18 L23 15 L26 18" stroke="#00cc66" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="auth-brand-name">CycleEdge</span>
+            </div>
+
+            <!-- Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login">Log in</button>
+                <button class="auth-tab" data-tab="signup">Sign up</button>
+            </div>
+
+            <!-- Google OAuth -->
+            <button id="authGoogleBtn" class="auth-google-btn">
+                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+            </button>
+
+            <div class="auth-divider"><span>or</span></div>
+
+            <!-- Login tab -->
+            <div id="authTabLogin">
+                <input type="email" id="authEmail" placeholder="Email address" autocomplete="email">
+                <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password">
+                <button id="authSubmitLogin" class="auth-submit">Log in</button>
+                <div id="authError" class="auth-error"></div>
+            </div>
+
+            <!-- Signup tab -->
+            <div id="authTabSignup" style="display:none">
+                <input type="text" id="authDisplayName" placeholder="Display name (optional)" autocomplete="name">
+                <input type="email" id="authEmailSignup" placeholder="Email address" autocomplete="email">
+                <input type="password" id="authPasswordSignup" placeholder="Password (min 6 chars)" autocomplete="new-password">
+                <button id="authSubmitSignup" class="auth-submit">Create account</button>
+                <div id="authErrorSignup" class="auth-error"></div>
+            </div>
+
+            <p class="auth-terms">By continuing you agree to use this app at your own risk.<br>Not financial advice.</p>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="label">BTC Price</span>
+            <span class="value" id="statPrice">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Signal</span>
+            <span class="value" id="statSignal">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Z-Score</span>
+            <span class="value" id="statZ">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Z vs 200d SMA</span>
+            <span class="value" id="statZvsSma">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Signal Active Since</span>
+            <span class="value" id="statSince">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Total Buy Signals</span>
+            <span class="value" id="statBuys">—</span>
+        </div>
+        <div class="stat">
+            <span class="label">Last update</span>
+            <span class="value" id="liveBadge" style="color:#00cc66;font-size:0.7rem">—</span>
+        </div>
+    </div>
+
+    <!-- Parameters -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Strategy Parameters — drag sliders to backtest in real time</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:7px">
+                    <span style="font-size:.72rem;color:#555;text-transform:uppercase;letter-spacing:1px">Stats from</span>
+                    <select id="startYear" class="year-select"><option value="0">All history</option></select>
+                </div>
+                <button class="reset-btn" id="resetParams">Reset defaults</button>
+            </div>
+        </div>
+        <div class="preset-wrap">
+            <div class="preset-top">
+                <span class="orig">Original Strategy</span>
+                <span class="rec">My Recommendations</span>
+            </div>
+            <input type="range" id="presetSlider" min="0" max="100" step="1" value="0">
+            <div class="preset-sublabels">
+                <span>365d Z &middot; 200d SMA &middot; no buffer</span>
+                <span>365d Z &middot; 130d SMA &middot; +0.25 entry / +0.15 exit</span>
+            </div>
+        </div>
+        <div class="params-grid">
+            <div class="param">
+                <div class="param-header">
+                    <span class="param-label">Z-Score Base Window</span>
+                    <span class="param-value" id="zWinVal">365d</span>
+                </div>
+                <input type="range" id="zWin" min="100" max="500" step="5" value="365">
+            </div>
+            <div class="param">
+                <div class="param-header">
+                    <span class="param-label">Signal SMA Window</span>
+                    <span class="param-value" id="smaWinVal">200d</span>
+                </div>
+                <input type="range" id="smaWin" min="30" max="400" step="5" value="200">
+            </div>
+            <div class="param">
+                <div class="param-header">
+                    <span class="param-label">Entry Buffer (buy when Z &gt; SMA + X)</span>
+                    <span class="param-value" id="entryBufVal">+0.00</span>
+                </div>
+                <input type="range" id="entryBuf" min="-0.50" max="1.50" step="0.05" value="0">
+            </div>
+            <div class="param">
+                <div class="param-header">
+                    <span class="param-label">Exit Buffer (sell when Z &lt; SMA − X)</span>
+                    <span class="param-value" id="exitBufVal">+0.00</span>
+                </div>
+                <input type="range" id="exitBuf" min="-0.50" max="1.50" step="0.05" value="0">
+            </div>
+        </div>
+        <div class="perf-row">
+            <div class="pstat"><span class="plabel">Strategy Return</span><span class="pvalue" id="pStatStrat">—</span></div>
+            <div class="pstat"><span class="plabel">Buy &amp; Hold</span><span class="pvalue" id="pStatBH">—</span></div>
+            <div class="pstat"><span class="plabel">Outperformance</span><span class="pvalue" id="pStatOut">—</span></div>
+            <div class="pstat"><span class="plabel">Completed Trades</span><span class="pvalue" id="pStatTrades">—</span></div>
+            <div class="pstat"><span class="plabel">Time in Market</span><span class="pvalue" id="pStatTime">—</span></div>
+        </div>
+        <div class="perf-row" style="margin-top:8px;border-top:1px solid #1a1a2e;padding-top:10px">
+            <div class="pstat"><span class="plabel">Leveraged Return <span id="pStatLevLabel" style="color:#f7931a66;font-size:0.6rem"></span></span><span class="pvalue" id="pStatLev">—</span></div>
+            <div class="pstat"><span class="plabel">Lev vs Buy &amp; Hold</span><span class="pvalue" id="pStatLevOut">—</span></div>
+            <div class="pstat"><span class="plabel" style="color:#f7931a66;font-size:0.6rem">⚠ Uses BTC Lev multiplier from SI panel. Applied during buy signal periods only.</span></div>
+        </div>
+    </div>
+
+    <!-- Price Chart -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title" id="priceChartTitle">Bitcoin Price (USD) — Log Scale · Green = in market · Red = cash</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button class="toggle-btn" id="toggleTops">Tops &amp; Bottoms</button>
+                <button class="toggle-btn" id="toggle4Y">4Y Cycles</button>
+                <button class="toggle-btn" id="toggle200W">200W MA</button>
+                <button class="toggle-btn" id="toggleLevZone">Lev Zone</button>
+                <button class="toggle-btn active" id="togglePredLine">Prediction</button>
+                <button class="reset-btn" id="resetPrice">Reset zoom</button>
+            </div>
+        </div>
+        <div class="chart-box price-box" id="priceBox">
+            <div class="loading-overlay" id="priceLoader">
+                <div class="spinner"></div>
+                <span>Fetching BTC data from CryptoCompare…</span>
+            </div>
+            <canvas id="priceChart" style="display:none"></canvas>
+        </div>
+    </div>
+
+    <!-- Indicator Chart -->
+    <div class="panel">
+        <div class="panel-header">
+            <div class="panel-title">Bull Momentum Gauge — Z-Score (orange) vs 200-day SMA (blue) · Cross above = BUY · Cross below = SELL</div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="toggle-btn" id="toggleTierLines">Tier Levels</button>
+                <button class="reset-btn" id="resetInd">Reset zoom</button>
+            </div>
+        </div>
+        <div class="chart-box ind-box">
+            <canvas id="indChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <!-- Yearly Returns -->
+    <div class="panel">
+        <div class="panel-title">Annual Returns — Strategy (green/red) vs Buy &amp; Hold (blue/purple)</div>
+        <div class="chart-box" style="height:230px">
+            <canvas id="yearChart"></canvas>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>How the strategy works</h3>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <p><strong>365-day Z-Score</strong> — measures how many standard deviations BTC's price sits above or below its 1-year moving average. Positive = above average.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <p><strong>200-day SMA of Z-Score</strong> — creates a long-term momentum baseline. Rising Z-score above this baseline = building bull momentum.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <p><strong>BUY signal</strong> — when Z-score crosses <em>above</em> its 200d SMA. Enter position, ride the bull market.</p>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <p><strong>SELL signal</strong> — when Z-score crosses <em>below</em> its 200d SMA. Exit to cash, avoid the bear market drawdown.</p>
+            </div>
+        </div>
+        <div class="legend-row">
+            <div class="legend-item"><div class="legend-line" style="background:#00cc66"></div> Price during BUY period</div>
+            <div class="legend-item"><div class="legend-line" style="background:#cc3333"></div> Price during SELL period</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#00ff88"></div> Buy signal (entry)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Sell signal (exit)</div>
+            <div class="legend-item"><div class="legend-line" style="background:#f7931a"></div> Z-Score (365d)</div>
+            <div class="legend-item"><div class="legend-line" style="background:#5577ff"></div> 200d SMA of Z-Score</div>
+        </div>
+    </div>
+
+    <!-- Investment Strategy Dashboard -->
+    <div class="panel" id="siPanel">
+        <div class="panel-header">
+            <div class="panel-title">Personal Investment Strategy — Next Cycle Projection (2026–2031)</div>
+        </div>
+
+        <!-- Save / Load settings row (visible when logged in) -->
+        <div class="si-save-row" id="siSaveRow" style="display:none">
+            <input type="text" id="siSettingsName" placeholder="Scenario name" style="width:180px">
+            <button id="siSaveBtn" class="small-btn">Save</button>
+            <select id="siLoadSelect"><option value="">— Load saved —</option></select>
+            <button id="siDeleteBtn" class="small-btn danger">Delete</button>
+        </div>
+
+        <!-- Inputs -->
+        <div class="si-inputs">
+            <div class="si-field">
+                <label>Total Lump Sum (3 tranches)</label>
+                <input type="number" id="siLumpSum" value="40000" min="0" step="1000">
+            </div>
+            <div class="si-field">
+                <label>Monthly Addition</label>
+                <input type="number" id="siMonthly" value="8000" min="0" step="500">
+            </div>
+            <div class="si-field">
+                <label>Monthly DCA Start</label>
+                <input type="month" id="siStartDate" value="2026-04">
+            </div>
+            <div class="si-field">
+                <label>Stop Buying (months before top)</label>
+                <select id="siStopOffset">
+                    <option value="3">3 months before top</option>
+                    <option value="6" selected>6 months before top</option>
+                    <option value="9">9 months before top</option>
+                    <option value="12">12 months before top</option>
+                </select>
+            </div>
+            <div class="si-field">
+                <label>Projected Bottom (USD)</label>
+                <input type="number" id="siProjBottomPrice" value="27800" min="5000" step="1000">
+            </div>
+            <div class="si-field">
+                <label>Projected Top (USD)</label>
+                <input type="number" id="siProjTopPrice" value="201521" min="50000" step="10000">
+            </div>
+        </div>
+        <div style="font-size:0.65rem;color:#333;margin:-12px 0 14px;padding-left:2px">Prediction curve uses cycle repeat method (prev cycle shape). Adjust bottom/top to scale.</div>
+
+        <!-- Lump sum price triggers -->
+        <div class="si-triggers">
+            <div class="si-triggers-title">Lump Sum Entry Triggers — each deploys <strong id="siTrancheAmt" style="color:#f7931a">—</strong> when BTC drops to target (USD) or backstop date is reached</div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label">T1</span>
+                <span>BTC ≤ $</span>
+                <input type="number" id="siT1Price" value="65000" step="1000">
+                <span>or by</span>
+                <input type="month" id="siT1Backstop" value="2026-10">
+                <span id="siT1Status" class="trigger-fired" style="display:none">✓ triggered</span>
+            </div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label">T2</span>
+                <span>BTC ≤ $</span>
+                <input type="number" id="siT2Price" value="50000" step="1000">
+                <span>or by</span>
+                <input type="month" id="siT2Backstop" value="2026-11">
+                <span id="siT2Status" class="trigger-fired" style="display:none">✓ triggered</span>
+            </div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label">T3</span>
+                <span>BTC ≤ $</span>
+                <input type="number" id="siT3Price" value="40000" step="1000">
+                <span>or by</span>
+                <input type="month" id="siT3Backstop" value="2026-12">
+                <span id="siT3Status" class="trigger-fired" style="display:none">✓ triggered</span>
+            </div>
+        </div>
+
+        <!-- Opportunistic bottom entries -->
+        <div class="si-triggers">
+            <div class="si-triggers-title">Opportunistic Entries — one-time lump sum at a specific date (e.g. predicted bottom)</div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label" style="color:#5577ff">MSTR</span>
+                <span>Amount</span>
+                <input type="number" id="siOppMstrAmt" placeholder="0" step="1000">
+                <span>enter</span>
+                <input type="month" id="siOppMstrDate" value="2026-10">
+                <span style="color:#444">uses mstrLevMult above</span>
+            </div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label" style="color:#f7931a">Lev BTC</span>
+                <span>Amount</span>
+                <input type="number" id="siOppLevAmt" placeholder="0" step="1000">
+                <span>enter</span>
+                <input type="month" id="siOppLevDate" value="2026-10">
+                <span style="color:#444">uses btcLevMult above</span>
+            </div>
+        </div>
+
+        <!-- Z-score strategy signal integration -->
+        <div class="si-triggers">
+            <div class="si-triggers-title">Z-Score Strategy Signals — trade on predicted BUY/SELL crossovers (adjust strategy params above to move signal dates)</div>
+            <div class="si-trigger-row">
+                <label class="hold-top-label" style="margin-left:0"><input type="checkbox" id="siUseZSignals"> Enable</label>
+                <span class="si-trigger-label" style="color:#00cc66; margin-left:12px">BUY</span>
+                <span>crossover → deploy extra</span>
+                <input type="number" id="siZSigBuyAmt" placeholder="0" step="500">
+                <span style="color:#444">(splits by allocation %)</span>
+                <span class="si-trigger-label" style="color:#ff5555; margin-left:12px">SELL</span>
+                <span>crossover → sell extra</span>
+                <input type="number" id="siZSigSellPct" value="0" min="0" max="50" step="5" style="width:60px">
+                <span>%</span>
+            </div>
+            <div class="si-trigger-row" id="siZSigDates" style="color:#555; font-size:0.7rem; margin-top:4px">
+                Predicted signal dates: <span id="siZSigDateList">—</span>
+            </div>
+        </div>
+
+        <!-- Manual signal rules -->
+        <div class="si-triggers">
+            <div class="si-triggers-title">Manual Signal Rules — automated buy/sell triggers on predicted price</div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label" style="color:#00cc66">BUY</span>
+                <span>if BTC drops</span>
+                <input type="number" id="siSigBuyDipPct" value="15" min="1" max="60" step="1" style="width:60px">
+                <span>% from recent high → deploy</span>
+                <input type="number" id="siSigBuyAmt" placeholder="0" step="500">
+                <span style="color:#444">(splits by allocation %)</span>
+            </div>
+            <div class="si-trigger-row">
+                <span class="si-trigger-label" style="color:#ff5555">SELL</span>
+                <span>if BTC drops</span>
+                <input type="number" id="siSigSellDropPct" value="8" min="1" max="30" step="1" style="width:60px">
+                <span>% month-over-month while above</span>
+                <input type="number" id="siSigSellThresh" value="70" min="10" max="100" step="5" style="width:60px">
+                <span>% of top → sell extra</span>
+                <input type="number" id="siSigSellPct" value="0" min="0" max="50" step="5" style="width:60px">
+                <span>%</span>
+            </div>
+        </div>
+
+        <!-- Allocation -->
+        <div class="si-alloc-row">
+            <div class="si-alloc-item">
+                <label>BTC Direct</label>
+                <input type="number" id="allocBTCDirect" value="80" min="0" max="100">
+                <span class="alloc-pct">%</span>
+            </div>
+            <div class="si-alloc-item">
+                <label>BTC Leveraged</label>
+                <input type="number" id="allocBTCLev" value="10" min="0" max="100">
+                <span class="alloc-pct">%</span>
+                <select id="btcLevMult">
+                    <option value="1.5">1.5×</option>
+                    <option value="2" selected>2×</option>
+                    <option value="3">3×</option>
+                </select>
+                <label class="hold-top-label"><input type="checkbox" id="siHoldLevTop"> hold to top</label>
+            </div>
+            <div class="si-alloc-item">
+                <label>MSTR</label>
+                <input type="number" id="allocMSTR" value="10" min="0" max="100">
+                <span class="alloc-pct">%</span>
+                <select id="mstrLevMult">
+                    <option value="1.5">1.5× BTC</option>
+                    <option value="1.8" selected>1.8× BTC</option>
+                    <option value="2.5">2.5× BTC</option>
+                </select>
+                <label class="hold-top-label"><input type="checkbox" id="siHoldMstrTop"> hold to top</label>
+            </div>
+            <div class="si-alloc-item">
+                <span class="alloc-warn" id="allocWarn"></span>
+            </div>
+        </div>
+
+        <!-- Summary stats -->
+        <div class="si-stats">
+            <div class="si-stat"><span class="sl">Total to Invest</span><span class="sv" id="siTotalInvest">—</span></div>
+            <div class="si-stat"><span class="sl">BTC Accumulated</span><span class="sv hi" id="siBTCAccum">—</span></div>
+            <div class="si-stat"><span class="sl">Avg Entry Price</span><span class="sv" id="siAvgEntry">—</span></div>
+            <div class="si-stat"><span class="sl">Value at Tier 1 Exit</span><span class="sv up" id="siTier1Val">—</span></div>
+            <div class="si-stat"><span class="sl">Value at Tier 2 Exit</span><span class="sv up" id="siTier2Val">—</span></div>
+            <div class="si-stat"><span class="sl">Value at Full Exit</span><span class="sv up" id="siTier3Val">—</span></div>
+            <div class="si-stat"><span class="sl" id="siHoldLabel">Remaining Holdings</span><span class="sv lo" id="siHoldVal">—</span></div>
+            <div class="si-stat"><span class="sl">Peak Portfolio Value</span><span class="sv hi" id="siPeakVal">—</span></div>
+            <div class="si-stat"><span class="sl">Peak Total Return</span><span class="sv hi" id="siReturn">—</span></div>
+        </div>
+
+        <!-- Chart -->
+        <div class="si-chart-box">
+            <canvas id="siChart"></canvas>
+        </div>
+
+        <!-- Trade schedule table -->
+        <div class="si-table-wrap">
+            <table class="si-table" id="siTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Phase</th>
+                        <th>Action</th>
+                        <th>Amount</th>
+                        <th>Est. Price</th>
+                        <th>BTC Bought</th>
+                        <th>BTC Total</th>
+                        <th>Portfolio Value</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody id="siTableBody"></tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Portfolio Panel (visible when logged in) -->
+    <div class="panel" id="portfolioPanel" style="display:none">
+        <!-- Content is injected by portfolio_tracker.js initPortfolioTracker() -->
+    </div>
+
+    <footer>
+        Not financial advice. Past performance does not guarantee future results.<br>
+        Strategy concept: <em>On-Chain Mind</em> · Price data: CryptoCompare public API (BTC/USD daily, ~2013–present)
+    </footer>
+</div>
+
+<script src="js/constants.js"></script>
+<script src="js/formatting.js"></script>
+<script src="js/indicators.js"></script>
+<script src="js/portfolio.js"></script>
+<script src="js/prediction.js"></script>
+<script src="js/strategy.js"></script>
+<script src="js/main.js"></script>
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/portfolio_tracker.js"></script>
+<script src="js/alerts.js"></script>
+</body>
+</html>
