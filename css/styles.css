@@ -1584,6 +1584,16 @@ footer {
     .si-trigger-row input[type=number] { width: 72px; font-size: 0.78rem; padding: 4px 6px; }
     .si-trigger-row input[type=month] { font-size: 0.78rem; padding: 4px 6px; }
 
+    /* Signal dates & trigger text overflow */
+    #siZSigDates,
+    .si-triggers-title {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+    }
+    #siZSigDates { display: block; }
+    .si-triggers { overflow: hidden; }
+
     /* Table: horizontal scroll, ensure it works */
     .si-table-wrap, .port-table-wrap { -webkit-overflow-scrolling: touch; }
     .si-table { font-size: 0.68rem; }

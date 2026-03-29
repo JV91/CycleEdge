@@ -379,6 +379,21 @@ async function init() {
         chart.update('none');
     }
 
+    const isMobile = window.innerWidth <= 768;
+    const ptBuy  = isMobile ? 5 : 9;
+    const ptSell = isMobile ? 5 : 9;
+    const ptHover = isMobile ? 7 : 12;
+    const ptStar = isMobile ? 6 : 11;
+    const ptStarHover = isMobile ? 8 : 14;
+    const ptTrade = isMobile ? 6 : 10;
+    const ptTradeHover = isMobile ? 8 : 13;
+    const tickFont = isMobile ? 9 : 11;
+    const annotFont = isMobile ? 8 : 11;
+    const annotSmFont = isMobile ? 7 : 10;
+    const annotYAdjTop = isMobile ? -42 : -62;
+    const annotYAdjBot = isMobile ? 46 : 68;
+    const annotPad = isMobile ? { x: 4, y: 3 } : { x: 6, y: 4 };
+
     const zoomPlug = (getOther, afterSync) => ({
         zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x',
                 onZoom: ({ chart }) => { syncX(chart, getOther()); if (afterSync) afterSync(chart); } },
@@ -389,7 +404,7 @@ async function init() {
     const sharedX = {
         type: 'time', time: { unit: 'year' },
         grid: { color: '#111120' },
-        ticks: { color: '#3a3a5a', font: { size: 11 }, maxRotation: 0 }
+        ticks: { color: '#3a3a5a', font: { size: tickFont }, maxRotation: 0, maxTicksLimit: isMobile ? 6 : undefined }
     };
 
     // Build annotation objects (stored so we can toggle display)
@@ -435,16 +450,16 @@ async function init() {
                 ? [`Top ${new Date(t.x).getFullYear()} (predicted)`, `~${fmtPrice(t.y)}`, `~+${t.daysFromHalving}d from halving`, t.pct]
                 : [`Top ${new Date(t.x).getFullYear()}`, fmtPrice(t.y), `+${t.daysFromHalving}d from halving`, t.pct],
             color: '#ffffff',
-            font: [{ size: 11, weight: 'bold' }, { size: 11, weight: 'bold' }, { size: 10 }, { size: 10 }],
+            font: [{ size: annotFont, weight: 'bold' }, { size: annotFont, weight: 'bold' }, { size: annotSmFont }, { size: annotSmFont }],
             textAlign: 'center',
             backgroundColor: t.predicted ? '#1a1200cc' : '#1a1200ee',
             borderColor: t.predicted ? '#ffd70066' : '#ffd700aa',
             borderWidth: 1,
             borderDash: t.predicted ? [4, 3] : [],
             borderRadius: 4,
-            padding: { x: 6, y: 4 },
+            padding: annotPad,
             xAdjust: t.xAdjust || 0,
-            yAdjust: -62,
+            yAdjust: annotYAdjTop,
             display: false
         };
     });
@@ -458,15 +473,15 @@ async function init() {
                 ? [`Bottom ${new Date(b.x).getFullYear()} (predicted)`, `~${fmtPrice(b.y)}`, `~+${b.daysFromHalving}d from halving`, `~${b.daysFromTop}d from top`, b.pct]
                 : [`Bottom ${new Date(b.x).getFullYear()}`, fmtPrice(b.y), `+${b.daysFromHalving}d from halving`, `${b.daysFromTop}d from top`, b.pct],
             color: '#ffffff',
-            font: [{ size: 11, weight: 'bold' }, { size: 11, weight: 'bold' }, { size: 10 }, { size: 10 }, { size: 10 }],
+            font: [{ size: annotFont, weight: 'bold' }, { size: annotFont, weight: 'bold' }, { size: annotSmFont }, { size: annotSmFont }, { size: annotSmFont }],
             textAlign: 'center',
             backgroundColor: b.predicted ? '#101800ee' : '#001018ee',
             borderColor: b.predicted ? '#aaff0099' : '#00ccffaa',
-            borderWidth: b.predicted ? 1 : 1,
+            borderWidth: 1,
             borderDash: b.predicted ? [4, 3] : [],
             borderRadius: 4,
-            padding: { x: 6, y: 4 },
-            yAdjust: 68,
+            padding: annotPad,
+            yAdjust: annotYAdjBot,
             display: false
         };
     });
@@ -487,19 +502,19 @@ async function init() {
                     }
                 },
                 { label: 'Buy signal', data: buyPts, type: 'scatter', pointStyle: 'triangle',
-                  rotation: 0,   pointRadius: 9, pointHoverRadius: 12,
+                  rotation: 0,   pointRadius: ptBuy, pointHoverRadius: ptHover,
                   backgroundColor: '#00ff88', borderColor: '#005533', borderWidth: 1, showLine: false },
                 { label: 'Sell signal', data: sellPts, type: 'scatter', pointStyle: 'triangle',
-                  rotation: 180, pointRadius: 9, pointHoverRadius: 12,
+                  rotation: 180, pointRadius: ptSell, pointHoverRadius: ptHover,
                   backgroundColor: '#ff4444', borderColor: '#550000', borderWidth: 1, showLine: false },
                 // Cycle tops (index 3) — initially hidden
                 { label: 'Cycle Top', data: CYCLE_TOPS, type: 'scatter', pointStyle: 'star',
-                  pointRadius: 11, pointHoverRadius: 14,
+                  pointRadius: ptStar, pointHoverRadius: ptStarHover,
                   backgroundColor: '#ffd700cc', borderColor: '#ffd700', borderWidth: 1,
                   showLine: false, hidden: true },
                 // Cycle bottoms (index 4) — initially hidden
                 { label: 'Cycle Bottom', data: CYCLE_BOTTOMS, type: 'scatter', pointStyle: 'star',
-                  pointRadius: 11, pointHoverRadius: 14,
+                  pointRadius: ptStar, pointHoverRadius: ptStarHover,
                   backgroundColor: '#00ccffcc', borderColor: '#00ccff', borderWidth: 1,
                   showLine: false, hidden: true },
                 // 200-week MA (index 5) — initially hidden
@@ -512,13 +527,13 @@ async function init() {
                   tension: 0.3, spanGaps: false, fill: false, hidden: false },
                 // Dataset 7: Real buy trades (diamond)
                 { label: 'My Buys', data: [], type: 'scatter',
-                  pointStyle: 'rectRot', pointRadius: 10, pointHoverRadius: 13,
+                  pointStyle: 'rectRot', pointRadius: ptTrade, pointHoverRadius: ptTradeHover,
                   borderColor: '#00ff99', borderWidth: 2,
                   backgroundColor: '#00cc66cc',
                   showLine: false, hidden: false },
                 // Dataset 8: Real sell trades (diamond)
                 { label: 'My Sells', data: [], type: 'scatter',
-                  pointStyle: 'rectRot', pointRadius: 10, pointHoverRadius: 13,
+                  pointStyle: 'rectRot', pointRadius: ptTrade, pointHoverRadius: ptTradeHover,
                   borderColor: '#ff8855', borderWidth: 2,
                   backgroundColor: '#ff5533cc',
                   showLine: false, hidden: false }
@@ -608,7 +623,7 @@ async function init() {
                 y: {
                     type: 'logarithmic', grid: { color: '#111120' },
                     max: 2000000,
-                    ticks: { color: '#3a3a5a', font: { size: 11 },
+                    ticks: { color: '#3a3a5a', font: { size: tickFont }, maxTicksLimit: isMobile ? 6 : undefined,
                              callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? fmtPrice(v) : null; } }
                 }
             }
@@ -668,7 +683,7 @@ async function init() {
             },
             scales: {
                 x: sharedX,
-                y: { grid: { color: '#111120' }, ticks: { color: '#3a3a5a', font: { size: 11 } } }
+                y: { grid: { color: '#111120' }, ticks: { color: '#3a3a5a', font: { size: tickFont } } }
             }
         }
     });
