@@ -375,10 +375,10 @@
                 <span style="color:#444">(splits by allocation %)</span>
                 <span class="si-trigger-label" style="color:#ff5555; margin-left:12px">SELL</span>
                 <span>crossover → sell extra</span>
-                <input type="number" id="siZSigSellPct" value="0" min="0" max="50" step="5" style="width:60px">
+                <input type="number" id="siZSigSellPct" value="0" min="0" max="50" step="5" class="input-sm">
                 <span>%</span>
             </div>
-            <div class="si-trigger-row" id="siZSigDates" style="color:#555; font-size:0.7rem; margin-top:4px">
+            <div class="si-sig-dates" id="siZSigDates">
                 Predicted signal dates: <span id="siZSigDateList">—</span>
             </div>
         </div>
@@ -389,7 +389,7 @@
             <div class="si-trigger-row">
                 <span class="si-trigger-label" style="color:#00cc66">BUY</span>
                 <span>if BTC drops</span>
-                <input type="number" id="siSigBuyDipPct" value="15" min="1" max="60" step="1" style="width:60px">
+                <input type="number" id="siSigBuyDipPct" value="15" min="1" max="60" step="1" class="input-sm">
                 <span>% from recent high → deploy</span>
                 <input type="number" id="siSigBuyAmt" placeholder="0" step="500">
                 <span style="color:#444">(splits by allocation %)</span>
@@ -397,11 +397,11 @@
             <div class="si-trigger-row">
                 <span class="si-trigger-label" style="color:#ff5555">SELL</span>
                 <span>if BTC drops</span>
-                <input type="number" id="siSigSellDropPct" value="8" min="1" max="30" step="1" style="width:60px">
+                <input type="number" id="siSigSellDropPct" value="8" min="1" max="30" step="1" class="input-sm">
                 <span>% month-over-month while above</span>
-                <input type="number" id="siSigSellThresh" value="70" min="10" max="100" step="5" style="width:60px">
+                <input type="number" id="siSigSellThresh" value="70" min="10" max="100" step="5" class="input-sm">
                 <span>% of top → sell extra</span>
-                <input type="number" id="siSigSellPct" value="0" min="0" max="50" step="5" style="width:60px">
+                <input type="number" id="siSigSellPct" value="0" min="0" max="50" step="5" class="input-sm">
                 <span>%</span>
             </div>
         </div>

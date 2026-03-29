@@ -711,6 +711,19 @@ footer {
 .si-trigger-row input:focus { border-color: #f7931a66; }
 .trigger-fired { color: #00cc66 !important; font-weight: 600; }
 
+/* Small number inputs (inline % fields etc) */
+.si-trigger-row .input-sm { width: 60px; }
+
+/* Signal dates block (not a flex trigger-row) */
+.si-sig-dates {
+    color: #555;
+    font-size: 0.7rem;
+    margin-top: 4px;
+    line-height: 1.6;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
 /* ── Auth button ── */
 .auth-btn {
     background: #181828;
@@ -1598,20 +1611,7 @@ footer {
         max-width: 100%;
         min-width: 0;
     }
-
-    /* Signal dates: force block + wrap */
-    #siZSigDates {
-        display: block !important;
-        flex-direction: unset;
-        word-break: break-all;
-        overflow-wrap: break-word;
-        white-space: normal !important;
-        max-width: 100%;
-    }
-    #siZSigDates span {
-        word-break: break-all;
-        overflow-wrap: break-word;
-    }
+    .si-trigger-row .input-sm { width: 60px; }
 
     /* Table: horizontal scroll, ensure it works */
     .si-table-wrap, .port-table-wrap { -webkit-overflow-scrolling: touch; }
@@ -1718,8 +1718,9 @@ footer {
     }
     .si-trigger-row:last-child { border-bottom: none; }
     .si-trigger-row input[type=number],
-    .si-trigger-row input[type=month] {
-        width: 100%;
+    .si-trigger-row input[type=month],
+    .si-trigger-row .input-sm {
+        width: 100% !important;
         max-width: 100%;
         min-width: 0;
     }
@@ -1729,7 +1730,7 @@ footer {
         width: 100%;
         max-width: 100%;
     }
-    .si-trigger-row .num-wrap input[type=number] { width: 100%; }
+    .si-trigger-row .num-wrap input[type=number] { width: 100% !important; }
 
     /* Alloc items: stack */
     .si-alloc-item {
