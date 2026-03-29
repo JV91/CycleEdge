@@ -1503,6 +1503,7 @@ footer {
         border-radius: 14px;
         padding: 14px 12px 12px;
         margin-bottom: 10px;
+        overflow: hidden;
     }
 
     /* Panel headers: stack title and controls */
@@ -1574,25 +1575,43 @@ footer {
     .si-stat .sl { font-size: 0.6rem; }
     .si-stat .sv { font-size: 0.88rem; }
 
-    /* Triggers: allow wrapping */
-    .si-triggers { padding: 10px 12px; }
-    .si-triggers-title { font-size: 0.62rem; }
+    /* Triggers: constrain to panel width */
+    .si-triggers {
+        padding: 10px 12px;
+        overflow: hidden;
+        max-width: 100%;
+    }
+    .si-triggers-title {
+        font-size: 0.62rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
     .si-trigger-row {
         gap: 6px;
         font-size: 0.7rem;
+        max-width: 100%;
     }
-    .si-trigger-row input[type=number] { width: 72px; font-size: 0.78rem; padding: 4px 6px; }
-    .si-trigger-row input[type=month] { font-size: 0.78rem; padding: 4px 6px; }
+    .si-trigger-row input[type=number] { font-size: 0.78rem; padding: 4px 6px; }
+    .si-trigger-row input[type=month] {
+        font-size: 0.78rem;
+        padding: 4px 6px;
+        max-width: 100%;
+        min-width: 0;
+    }
 
-    /* Signal dates & trigger text overflow */
-    #siZSigDates,
-    .si-triggers-title {
-        word-break: break-word;
+    /* Signal dates: force block + wrap */
+    #siZSigDates {
+        display: block !important;
+        flex-direction: unset;
+        word-break: break-all;
         overflow-wrap: break-word;
-        white-space: normal;
+        white-space: normal !important;
+        max-width: 100%;
     }
-    #siZSigDates { display: block; }
-    .si-triggers { overflow: hidden; }
+    #siZSigDates span {
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
 
     /* Table: horizontal scroll, ensure it works */
     .si-table-wrap, .port-table-wrap { -webkit-overflow-scrolling: touch; }
@@ -1690,24 +1709,36 @@ footer {
     /* Trigger rows: stack vertically */
     .si-trigger-row {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         gap: 4px;
         padding: 8px 0;
         border-bottom: 1px solid #1a1a2e;
+        max-width: 100%;
+        overflow: hidden;
     }
     .si-trigger-row:last-child { border-bottom: none; }
     .si-trigger-row input[type=number],
     .si-trigger-row input[type=month] {
         width: 100%;
+        max-width: 100%;
+        min-width: 0;
     }
 
+    /* Number wrap: full width in stacked triggers */
+    .si-trigger-row .num-wrap {
+        width: 100%;
+        max-width: 100%;
+    }
+    .si-trigger-row .num-wrap input[type=number] { width: 100%; }
+
     /* Alloc items: stack */
-    .si-alloc-item { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .si-alloc-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    .si-alloc-item select { width: 100%; }
 
     /* Portfolio stats: single column */
     .port-stats-row { grid-template-columns: 1fr; }
-
-    /* Number wrap: full width in stacked triggers */
-    .si-trigger-row .num-wrap { width: 100%; }
-    .si-trigger-row .num-wrap input[type=number] { width: 100%; }
 }
