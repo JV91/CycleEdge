@@ -240,8 +240,9 @@ async function switchCurrency(currency) {
     if (predLineUSD) {
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
     }
-    // Rebuild MSTR indexed overlay in new currency
+    // Return datasets are dimensionless — just rebuild from updated pricesUSD
     priceChart.data.datasets[9].data = buildMstrDs();
+    priceChart.data.datasets[10].data = buildBtcReturnDs();
     // Reset y-axis range
     priceChart.options.scales.y.max = 2000000 * currencyRate;
     priceChart.options.scales.y.min = undefined;
@@ -342,21 +343,27 @@ async function init() {
     const priceDs = dates.map((d, i) => ({ x: d, y: prices[i] }));
     ma200wRaw = rollingMean(prices, 1400);
 
-    // Fetch real MSTR stock price history and index it to BTC's price level
-    // at Aug 11 2020 (MSTR's first BTC purchase) so both lines share the left axis.
+    // Fetch real MSTR stock price history.
+    // Plotted on a right "% return" axis both anchored to Aug 11 2020 = 100.
+    // This correctly shows MSTR's amplified swings vs BTC without dollar-scale distortion.
     function buildMstrDs() {
         if (!mstrDataUSD.length) return [];
-        const anchorTs  = new Date('2020-08-11').getTime();
-        // Find MSTR price at anchor date
+        const anchorTs   = new Date('2020-08-11').getTime();
         const mstrAnchor = mstrDataUSD.find(p => p.x >= anchorTs);
         if (!mstrAnchor) return [];
-        // Find BTC price at same anchor date
-        const btcAnchorIdx = dates.findIndex(d => d >= anchorTs);
-        if (btcAnchorIdx < 0) return [];
-        const btcAnchor = pricesUSD[btcAnchorIdx];
-        // Scale factor: rebase MSTR so its anchor price = BTC anchor price
-        const scale = btcAnchor / mstrAnchor.y;
-        return mstrDataUSD.map(p => ({ x: p.x, y: p.y * scale * currencyRate }));
+        return mstrDataUSD
+            .filter(p => p.x >= anchorTs)
+            .map(p => ({ x: p.x, y: (p.y / mstrAnchor.y) * 100 }));
+    }
+
+    function buildBtcReturnDs() {
+        const anchorTs  = new Date('2020-08-11').getTime();
+        const anchorIdx = dates.findIndex(d => d >= anchorTs);
+        if (anchorIdx < 0) return [];
+        const anchorPrice = pricesUSD[anchorIdx];
+        return dates
+            .slice(anchorIdx)
+            .map((d, i) => ({ x: d, y: (pricesUSD[anchorIdx + i] / anchorPrice) * 100 }));
     }
 
     let mstrDs = [];
@@ -603,11 +610,16 @@ async function init() {
                   borderColor: '#ff8855', borderWidth: 2,
                   backgroundColor: '#ff5533cc',
                   showLine: false, hidden: false },
-                // Dataset 9: MSTR indexed to BTC price at Aug 2020 (same left axis)
+                // Dataset 9: MSTR % return since Aug 2020 (right axis, = 100 at anchor)
                 { label: 'MSTR', data: mstrDs,
                   borderColor: '#5577ffcc', borderWidth: 1.5,
                   pointRadius: 0, tension: 0.2, spanGaps: false, fill: false,
-                  hidden: true }
+                  hidden: true, yAxisID: 'yReturn' },
+                // Dataset 10: BTC % return since Aug 2020 (right axis, same scale as MSTR)
+                { label: 'BTC Return', data: buildBtcReturnDs(),
+                  borderColor: '#f7931a66', borderWidth: 1, borderDash: [3, 3],
+                  pointRadius: 0, tension: 0, spanGaps: false, fill: false,
+                  hidden: true, yAxisID: 'yReturn' }
             ]
         },
         options: {
@@ -675,7 +687,9 @@ async function init() {
                             if (ctx.dataset.label === 'Cycle Prediction')
                                 return ` Predicted price: ~${fmtPrice(ctx.parsed.y)}`;
                             if (ctx.dataset.label === 'MSTR')
-                                return ` MSTR (indexed to BTC Aug 2020): ${fmtPrice(ctx.parsed.y)}`;
+                                return ` MSTR return since Aug 2020: ${(ctx.parsed.y).toFixed(0)}x`;
+                            if (ctx.dataset.label === 'BTC Return')
+                                return ` BTC return since Aug 2020: ${(ctx.parsed.y).toFixed(0)}x`;
                             if (ctx.dataset.label === 'My Buys') {
                                 const amt = ctx.raw.amount ? `  (${ctx.raw.amountFmt})` : '';
                                 return ` My Buy: ${fmtPrice(ctx.parsed.y)}${amt}`;
@@ -699,6 +713,12 @@ async function init() {
                     ticks: { color: '#3a3a5a', font: { size: tickFont }, maxTicksLimit: isMobile ? 6 : undefined,
                              callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? fmtPrice(v) : null; } }
                 },
+                yReturn: {
+                    type: 'logarithmic', position: 'right', display: false,
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#5577ffaa', font: { size: tickFont }, maxTicksLimit: 6,
+                             callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? Math.round(v) + 'x' : null; } }
+                }
             }
         }
     });
@@ -889,11 +909,13 @@ async function init() {
         priceChart.update('none');
     });
 
-    // MSTR indexed overlay toggle
+    // MSTR/BTC return comparison toggle
     document.getElementById('toggleMSTR').addEventListener('click', function () {
         const show = !this.classList.contains('active');
         this.classList.toggle('active');
         priceChart.data.datasets[9].hidden = !show;
+        priceChart.data.datasets[10].hidden = !show;
+        priceChart.options.scales.yReturn.display = show;
         priceChart.update('none');
     });
 
