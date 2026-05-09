@@ -42,11 +42,14 @@ async function fetchBTCHistory() {
 // ── MSTR data fetch ───────────────────────────────────────────────────────────
 
 async function fetchMSTRHistory() {
-    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=10y';
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error(`Yahoo Finance error ${res.status}`);
-    const json = await res.json();
-    const result = json.chart.result[0];
+    const yahoo = 'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=10y';
+    // Yahoo Finance blocks requests from github.io — route through a CORS proxy
+    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(yahoo);
+    const res   = await fetch(proxy);
+    if (!res.ok) throw new Error(`MSTR proxy error ${res.status}`);
+    const wrapper = await res.json();
+    const json    = JSON.parse(wrapper.contents);
+    const result  = json.chart.result[0];
     const timestamps = result.timestamp;
     const closes     = result.indicators.quote[0].close;
     const out = [];
