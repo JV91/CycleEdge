@@ -43,21 +43,29 @@ async function fetchBTCHistory() {
 
 async function fetchMSTRHistory() {
     const yahoo = 'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=10y';
-    // Yahoo Finance blocks requests from github.io — route through a CORS proxy
-    const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(yahoo);
-    const res   = await fetch(proxy);
-    if (!res.ok) throw new Error(`MSTR proxy error ${res.status}`);
-    const wrapper = await res.json();
-    const json    = JSON.parse(wrapper.contents);
-    const result  = json.chart.result[0];
-    const timestamps = result.timestamp;
-    const closes     = result.indicators.quote[0].close;
-    const out = [];
-    for (let i = 0; i < timestamps.length; i++) {
-        if (closes[i] == null) continue;
-        out.push({ x: timestamps[i] * 1000, y: closes[i] });
+    // Try multiple CORS proxies in order — Yahoo Finance blocks github.io directly
+    const proxies = [
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    ];
+    let lastErr;
+    for (const makeUrl of proxies) {
+        try {
+            const res  = await fetch(makeUrl(yahoo), { signal: AbortSignal.timeout(8000) });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            const result     = json.chart.result[0];
+            const timestamps = result.timestamp;
+            const closes     = result.indicators.quote[0].close;
+            const out = [];
+            for (let i = 0; i < timestamps.length; i++) {
+                if (closes[i] == null) continue;
+                out.push({ x: timestamps[i] * 1000, y: closes[i] });
+            }
+            return out;
+        } catch(e) { lastErr = e; }
     }
-    return out;
+    throw lastErr;
 }
 
 // ── Live stats ────────────────────────────────────────────────────────────────
