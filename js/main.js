@@ -686,10 +686,20 @@ async function init() {
                             }
                             if (ctx.dataset.label === 'Cycle Prediction')
                                 return ` Predicted price: ~${fmtPrice(ctx.parsed.y)}`;
-                            if (ctx.dataset.label === 'MSTR')
-                                return ` MSTR return since Aug 2020: ${(ctx.parsed.y).toFixed(0)}x`;
+                            if (ctx.dataset.label === 'MSTR') {
+                                // Look up real MSTR price from raw data by timestamp
+                                const ts = ctx.parsed.x;
+                                const mstrPt = mstrDataUSD.reduce((best, p) => Math.abs(p.x - ts) < Math.abs(best.x - ts) ? p : best, mstrDataUSD[0]);
+                                const mstrRet = ctx.parsed.y;
+                                // Find BTC return at same date from dataset 10
+                                const btcRetDs = ctx.chart.data.datasets[10].data;
+                                const btcPt = btcRetDs.reduce((best, p) => Math.abs(p.x - ts) < Math.abs(best.x - ts) ? p : best, btcRetDs[0]);
+                                const ratio = btcPt ? (mstrRet / btcPt.y) : null;
+                                const ratioStr = ratio !== null ? (ratio >= 1 ? ` (+${ratio.toFixed(1)}× vs BTC)` : ` (${ratio.toFixed(1)}× vs BTC)`) : '';
+                                return ` MSTR: $${mstrPt.y.toFixed(2)}${ratioStr}`;
+                            }
                             if (ctx.dataset.label === 'BTC Return')
-                                return ` BTC return since Aug 2020: ${(ctx.parsed.y).toFixed(0)}x`;
+                                return ` BTC: ${(ctx.parsed.y / 100).toFixed(1)}× since Aug 2020`;
                             if (ctx.dataset.label === 'My Buys') {
                                 const amt = ctx.raw.amount ? `  (${ctx.raw.amountFmt})` : '';
                                 return ` My Buy: ${fmtPrice(ctx.parsed.y)}${amt}`;
