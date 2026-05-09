@@ -10,6 +10,7 @@ let currencyRate = 1, currencySymbol = '$';
 const exchangeRates = { USD: 1 };
 let predLineUSD = null;
 let predSignals = []; // future Z-score crossover events: [{ ts, signal }]
+let mstrDataUSD = []; // real MSTR price history [{x, y}] in USD
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
@@ -36,6 +37,24 @@ async function fetchBTCHistory() {
         .filter(d => { if (seen.has(d.time) || d.close <= 0) return false; seen.add(d.time); return true; })
         .sort((a, b) => a.time - b.time)
         .map(d => ({ ts: d.time * 1000, price: d.close }));
+}
+
+// ── MSTR data fetch ───────────────────────────────────────────────────────────
+
+async function fetchMSTRHistory() {
+    const url = 'https://query1.finance.yahoo.com/v8/finance/chart/MSTR?interval=1d&range=10y';
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`Yahoo Finance error ${res.status}`);
+    const json = await res.json();
+    const result = json.chart.result[0];
+    const timestamps = result.timestamp;
+    const closes     = result.indicators.quote[0].close;
+    const out = [];
+    for (let i = 0; i < timestamps.length; i++) {
+        if (closes[i] == null) continue;
+        out.push({ x: timestamps[i] * 1000, y: closes[i] });
+    }
+    return out;
 }
 
 // ── Live stats ────────────────────────────────────────────────────────────────
@@ -229,9 +248,8 @@ async function switchCurrency(currency) {
     if (predLineUSD) {
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
     }
-    // Rebuild MSTR overlay in new currency
-    const _mstrBeta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
-    priceChart.data.datasets[9].data = buildMstrDs(_mstrBeta);
+    // Convert MSTR prices to new currency
+    priceChart.data.datasets[9].data = mstrDataUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
     // Reset y-axis range
     priceChart.options.scales.y.max = 2000000 * currencyRate;
     priceChart.options.scales.y.min = undefined;
@@ -332,25 +350,14 @@ async function init() {
     const priceDs = dates.map((d, i) => ({ x: d, y: prices[i] }));
     ma200wRaw = rollingMean(prices, 1400);
 
-    // MSTR simulated overlay — rebased to BTC price at MSTR's first BTC purchase (Aug 2020)
-    // Uses the user-selected MSTR beta multiplier from the SI panel
-    function buildMstrDs(betaMult) {
-        const anchorTs = new Date('2020-08-11').getTime();
-        const anchorIdx = dates.findIndex(d => d >= anchorTs);
-        if (anchorIdx < 0) return [];
-        const anchorBTC = pricesUSD[anchorIdx];
-        let mstrNorm = anchorBTC; // starts at BTC price level for chart readability
-        const out = [];
-        for (let i = anchorIdx; i < dates.length; i++) {
-            const btcRet = pricesUSD[i] / pricesUSD[i > 0 ? i - 1 : i];
-            const mstrRet = 1 + betaMult * (btcRet - 1);
-            mstrNorm = i === anchorIdx ? anchorBTC : mstrNorm * Math.max(0.01, mstrRet);
-            out.push({ x: dates[i], y: Math.round(mstrNorm * currencyRate) });
-        }
-        return out;
+    // Fetch real MSTR stock price history
+    let mstrDs = [];
+    try {
+        mstrDataUSD = await fetchMSTRHistory();
+        mstrDs = mstrDataUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
+    } catch(e) {
+        console.warn('MSTR fetch failed:', e);
     }
-    const mstrBeta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
-    const mstrDs = buildMstrDs(mstrBeta);
     const ma200wDs  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
     const mkTierDs = offset => dates.map((d, i) => ({ x: d, y: zSma[i] !== null ? zSma[i] + offset : null }));
     predLineUSD = generatePredictionLine(
@@ -588,10 +595,11 @@ async function init() {
                   borderColor: '#ff8855', borderWidth: 2,
                   backgroundColor: '#ff5533cc',
                   showLine: false, hidden: false },
-                // Dataset 9: MSTR simulated overlay (hidden by default)
-                { label: 'MSTR (sim)', data: mstrDs,
-                  borderColor: '#5577ffcc', borderWidth: 1.5, borderDash: [4, 3],
-                  pointRadius: 0, tension: 0.2, spanGaps: false, fill: false, hidden: true }
+                // Dataset 9: MSTR real price (hidden by default, uses right Y axis)
+                { label: 'MSTR', data: mstrDs,
+                  borderColor: '#5577ffcc', borderWidth: 1.5,
+                  pointRadius: 0, tension: 0.2, spanGaps: false, fill: false,
+                  hidden: true, yAxisID: 'yMSTR' }
             ]
         },
         options: {
@@ -658,10 +666,8 @@ async function init() {
                             }
                             if (ctx.dataset.label === 'Cycle Prediction')
                                 return ` Predicted price: ~${fmtPrice(ctx.parsed.y)}`;
-                            if (ctx.dataset.label === 'MSTR (sim)') {
-                                const beta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
-                                return ` MSTR simulated (${beta}× BTC): ~${fmtPrice(ctx.parsed.y)}`;
-                            }
+                            if (ctx.dataset.label === 'MSTR')
+                                return ` MSTR: ${fmtPrice(ctx.parsed.y)}`;
                             if (ctx.dataset.label === 'My Buys') {
                                 const amt = ctx.raw.amount ? `  (${ctx.raw.amountFmt})` : '';
                                 return ` My Buy: ${fmtPrice(ctx.parsed.y)}${amt}`;
@@ -684,6 +690,12 @@ async function init() {
                     max: 2000000,
                     ticks: { color: '#3a3a5a', font: { size: tickFont }, maxTicksLimit: isMobile ? 6 : undefined,
                              callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? fmtPrice(v) : null; } }
+                },
+                yMSTR: {
+                    type: 'logarithmic', position: 'right', display: false,
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#5577ffaa', font: { size: tickFont }, maxTicksLimit: 6,
+                             callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? '$' + Math.round(v) : null; } }
                 }
             }
         }
@@ -875,18 +887,12 @@ async function init() {
         priceChart.update('none');
     });
 
-    // MSTR simulated overlay toggle
+    // MSTR real price toggle
     document.getElementById('toggleMSTR').addEventListener('click', function () {
         const show = !this.classList.contains('active');
         this.classList.toggle('active');
         priceChart.data.datasets[9].hidden = !show;
-        priceChart.update('none');
-    });
-
-    // Rebuild MSTR overlay when beta multiplier changes
-    document.getElementById('mstrLevMult')?.addEventListener('change', () => {
-        const beta = parseFloat(document.getElementById('mstrLevMult').value) || 1.8;
-        priceChart.data.datasets[9].data = buildMstrDs(beta);
+        priceChart.options.scales.yMSTR.display = show;
         priceChart.update('none');
     });
 
