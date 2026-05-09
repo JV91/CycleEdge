@@ -433,12 +433,17 @@ function renderStrategyDashboard() {
         tr.className = isExit ? 'si-row-exit' : isBuy ? `si-row-${r.phase}` : '';
         if (isPast) tr.style.opacity = '0.45';
 
+        const isRealPrice = r.ts <= dates[dates.length - 1];
+        const priceCell = isRealPrice
+            ? `<td class="btc-cell">${fmtSI(r.price)} <span style="color:#00cc6655;font-size:0.6rem">real</span></td>`
+            : `<td class="btc-cell" style="color:#888">${fmtSI(r.price)} <span style="color:#44446655;font-size:0.6rem">est.</span></td>`;
+
         tr.innerHTML = `
             <td>${siMonthLabel(r.ts)}</td>
             <td><span class="phase-badge ${phaseClass[r.phase]}">${phaseLabel[r.phase]}</span></td>
             <td class="${isBuy ? 'buy-cell' : isExit ? 'sell-cell' : ''}">${isBuy ? '▲ Buy' : isExit ? '▼ Sell' : '·'}</td>
             <td class="${isBuy ? 'buy-cell' : ''}">${isBuy ? fmtSI(r.deployThis) : '—'}</td>
-            <td class="btc-cell">${fmtSI(r.price)}</td>
+            ${priceCell}
             <td class="btc-cell">${r.btcBought > 0 ? r.btcBought.toFixed(5) : '—'}</td>
             <td class="btc-cell">${r.btcTotal.toFixed(4)}</td>
             <td>${fmtSI(r.totalValue)}</td>

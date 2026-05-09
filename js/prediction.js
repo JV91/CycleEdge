@@ -136,12 +136,23 @@ function generatePredictedSignals(zWin, smaWin, entryBuf, exitBuf) {
 // Depends on global: predLineUSD (set in main.js)
 
 function siGetPredPriceUSD(tsMs) {
-    // Interpolate from predLineUSD (or fall back to piecewise)
+    // For dates within real historical data, interpolate from actual prices.
+    // This ensures the DCA calculator uses real entry prices for past/present months.
+    if (dates && pricesUSD && dates.length > 0 && tsMs <= dates[dates.length - 1]) {
+        if (tsMs <= dates[0]) return pricesUSD[0];
+        let lo = 0, hi = dates.length - 1;
+        while (lo < hi - 1) {
+            const mid = (lo + hi) >> 1;
+            if (dates[mid] <= tsMs) lo = mid; else hi = mid;
+        }
+        const span = dates[hi] - dates[lo];
+        const frac = span > 0 ? (tsMs - dates[lo]) / span : 0;
+        return pricesUSD[lo] * Math.pow(pricesUSD[hi] / pricesUSD[lo], frac);
+    }
+
+    // For future dates, interpolate from the prediction line
     if (!predLineUSD || predLineUSD.length === 0) return null;
-    // clamp to range
-    if (tsMs <= predLineUSD[0].x)                    return predLineUSD[0].y;
     if (tsMs >= predLineUSD[predLineUSD.length - 1].x) return predLineUSD[predLineUSD.length - 1].y;
-    // find surrounding points and interpolate on log scale
     for (let i = 1; i < predLineUSD.length; i++) {
         if (predLineUSD[i].x >= tsMs) {
             const a = predLineUSD[i - 1], b = predLineUSD[i];
