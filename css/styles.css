@@ -1743,3 +1743,139 @@ footer {
     /* Portfolio stats: single column */
     .port-stats-row { grid-template-columns: 1fr; }
 }
+
+/* ── Cycle Clock ── */
+#cycleClock {
+    background: #0e0e18;
+    border: 1px solid #1c1c2e;
+    border-radius: 18px;
+    padding: 20px 20px 16px;
+    margin-bottom: 14px;
+}
+
+.cc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.cc-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #444;
+}
+
+.cc-zone-badge {
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1.5px solid;
+}
+
+.cc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.cc-card {
+    background: #07070d;
+    border: 1px solid #1c1c2e;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.cc-card-label {
+    font-size: 0.65rem;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+}
+
+.cc-card-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 3px;
+}
+
+.cc-card-sub {
+    font-size: 0.65rem;
+    color: #333;
+}
+
+.cc-bar-wrap {
+    margin-bottom: 14px;
+}
+
+.cc-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.cc-bar-track {
+    position: relative;
+    height: 10px;
+    border-radius: 6px;
+    overflow: visible;
+    display: flex;
+}
+
+.cc-bar-bull {
+    height: 100%;
+    background: linear-gradient(to right, #00cc6633, #00cc6688);
+    border-radius: 6px 0 0 6px;
+}
+
+.cc-bar-bear {
+    height: 100%;
+    background: linear-gradient(to right, #cc333366, #cc333333);
+    border-radius: 0 6px 6px 0;
+}
+
+.cc-bar-now {
+    position: absolute;
+    top: -3px;
+    width: 3px;
+    height: 16px;
+    background: #f7931a;
+    border-radius: 2px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 6px #f7931a88;
+}
+
+.cc-bar-sublabels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    margin-top: 5px;
+}
+
+.cc-advice {
+    font-size: 0.78rem;
+    color: #666;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #07070d;
+    border: 1px solid #1c1c2e;
+    border-radius: 10px;
+    line-height: 1.5;
+}
+
+.cc-advice-icon {
+    font-size: 0.55rem;
+    margin-top: 4px;
+    flex-shrink: 0;
+}

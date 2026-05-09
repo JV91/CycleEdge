@@ -62,6 +62,8 @@ function updateCurrentStats() {
     document.getElementById('statSince').textContent = fmtDate(dates[sigStart]);
     document.getElementById('statBuys').textContent = buyCount;
 
+    if (typeof updateCycleClock === 'function') updateCycleClock();
+
     const badge = document.getElementById('signalBadge');
     badge.textContent = curSig ? curSig.toUpperCase() : '\u2014';
     badge.className = 'signal-badge ' + (curSig || 'init');
@@ -890,6 +892,8 @@ async function init() {
     // Default to USD on load (overridden by saved settings if user changed it)
     const _savedSettings = (() => { try { return JSON.parse(localStorage.getItem('btcAppSettings') || '{}'); } catch { return {}; } })();
     await switchCurrency(_savedSettings.currency || 'USD');
+
+    if (typeof initCycleClock === 'function') initCycleClock();
 
     if (typeof initAuth === 'function') initAuth();
     if (typeof initPortfolioTracker === 'function') initPortfolioTracker();
