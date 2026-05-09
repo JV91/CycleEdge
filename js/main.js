@@ -354,19 +354,23 @@ async function init() {
         syncing = false;
     }
 
-    // Auto-scale Y axis to visible price data so zoomed views don't look flat
+    // Auto-scale Y axis to visible price data so zoomed views don't look flat.
+    // Considers both the real price line (ds 0) and the prediction line (ds 6).
     function autoScaleY(chart) {
         const { min: xMin, max: xMax } = chart.scales.x;
-        const data = chart.data.datasets[0].data;
         let lo = Infinity, hi = -Infinity;
-        for (const p of data) {
-            if (p.x >= xMin && p.x <= xMax && p.y > 0) {
-                if (p.y < lo) lo = p.y;
-                if (p.y > hi) hi = p.y;
+        for (const dsIdx of [0, 6]) {
+            const ds = chart.data.datasets[dsIdx];
+            if (!ds || ds.hidden) continue;
+            for (const p of ds.data) {
+                if (p.x >= xMin && p.x <= xMax && p.y > 0) {
+                    if (p.y < lo) lo = p.y;
+                    if (p.y > hi) hi = p.y;
+                }
             }
         }
         if (!isFinite(lo)) return;
-        // Add 25% log-space padding so labels/signals have room
+        // Add log-space padding so labels/signals have room
         const pad = Math.pow(hi / lo, 0.35);
         chart.options.scales.y.min = lo / pad;
         chart.options.scales.y.max = Math.max(hi * pad, hi * 2);
@@ -881,6 +885,7 @@ async function init() {
     const _zoomMax = new Date('2030-01-01').getTime();
     priceChart.zoomScale('x', { min: _zoomMin, max: _zoomMax }, 'none');
     indChart.zoomScale('x',   { min: _zoomMin, max: _zoomMax }, 'none');
+    autoScaleY(priceChart);
 
     // Default to USD on load (overridden by saved settings if user changed it)
     const _savedSettings = (() => { try { return JSON.parse(localStorage.getItem('btcAppSettings') || '{}'); } catch { return {}; } })();
