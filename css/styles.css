@@ -121,6 +121,19 @@ header {
 .stat .value.buy  { color: #00ff88; }
 .stat .value.sell { color: #ff4444; }
 
+.stat-sub {
+    display: block;
+    font-size: 0.62rem;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.stat-risk {
+    border-color: #1c1c2e;
+    transition: border-color 0.4s;
+}
+
 /* ── Chart panels ── */
 .panel {
     background: #0e0e18;

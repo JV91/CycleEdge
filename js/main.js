@@ -53,6 +53,28 @@ function updateCurrentStats() {
         if (signals[i] === 'buy' && signals[i-1] !== 'buy') buyCount++;
 
     document.getElementById('statPrice').textContent = fmtPrice(prices[last]);
+
+    // Risk tier derived from Z-score
+    const _tiers = [
+        { max: 0,   zone: 'Deep Value', action: 'Strong accumulate', color: '#00ff88' },
+        { max: 1.5, zone: 'Accumulate', action: 'Good entry zone',   color: '#00cc66' },
+        { max: 3.0, zone: 'Neutral',    action: 'Smaller positions', color: '#f7931a' },
+        { max: 5.0, zone: 'Caution',    action: 'Plan your exits',   color: '#ff8800' },
+        { max: Infinity, zone: 'Danger', action: 'Protect gains',    color: '#ff4444' },
+    ];
+    const _tier = curZ !== null ? _tiers.find(t => curZ < t.max) : null;
+    const _riskZoneEl  = document.getElementById('statRiskZone');
+    const _riskActEl   = document.getElementById('statRiskAction');
+    const _riskCard    = document.getElementById('statRiskCard');
+    const _priceSubEl  = document.getElementById('statPriceSub');
+    if (_tier && _riskZoneEl) {
+        _riskZoneEl.textContent  = _tier.zone;
+        _riskZoneEl.style.color  = _tier.color;
+        if (_riskActEl) { _riskActEl.textContent = _tier.action; _riskActEl.style.color = _tier.color + '99'; }
+        if (_riskCard)  _riskCard.style.borderColor = _tier.color + '33';
+        if (_priceSubEl){ _priceSubEl.textContent = _tier.zone; _priceSubEl.style.color = _tier.color + 'aa'; }
+    }
+
     const sigEl = document.getElementById('statSignal');
     sigEl.textContent = curSig ? curSig.toUpperCase() : '\u2014';
     sigEl.className = 'value ' + (curSig || '');
