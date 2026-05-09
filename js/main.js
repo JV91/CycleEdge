@@ -405,7 +405,7 @@ async function init() {
     function autoScaleY(chart) {
         const { min: xMin, max: xMax } = chart.scales.x;
         let lo = Infinity, hi = -Infinity;
-        for (const dsIdx of [0, 6, 9]) {
+        for (const dsIdx of [0, 6]) {
             const ds = chart.data.datasets[dsIdx];
             if (!ds || ds.hidden) continue;
             for (const p of ds.data) {
@@ -687,7 +687,7 @@ async function init() {
                     type: 'logarithmic', position: 'right', display: false,
                     grid: { drawOnChartArea: false },
                     ticks: { color: '#5577ffaa', font: { size: tickFont }, maxTicksLimit: 6,
-                             callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? '$' + Math.round(v) : null; } }
+                             callback: v => { const l = Math.log10(v); return Math.abs(l - Math.round(l)) < 0.01 ? currencySymbol + Math.round(v) : null; } }
                 }
             }
         }
