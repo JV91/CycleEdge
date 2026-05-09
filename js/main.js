@@ -229,6 +229,9 @@ async function switchCurrency(currency) {
     if (predLineUSD) {
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
     }
+    // Rebuild MSTR overlay in new currency
+    const _mstrBeta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
+    priceChart.data.datasets[9].data = buildMstrDs(_mstrBeta);
     // Reset y-axis range
     priceChart.options.scales.y.max = 2000000 * currencyRate;
     priceChart.options.scales.y.min = undefined;
@@ -328,6 +331,26 @@ async function init() {
     pricesUSD = [...prices];
     const priceDs = dates.map((d, i) => ({ x: d, y: prices[i] }));
     ma200wRaw = rollingMean(prices, 1400);
+
+    // MSTR simulated overlay — rebased to BTC price at MSTR's first BTC purchase (Aug 2020)
+    // Uses the user-selected MSTR beta multiplier from the SI panel
+    function buildMstrDs(betaMult) {
+        const anchorTs = new Date('2020-08-11').getTime();
+        const anchorIdx = dates.findIndex(d => d >= anchorTs);
+        if (anchorIdx < 0) return [];
+        const anchorBTC = pricesUSD[anchorIdx];
+        let mstrNorm = anchorBTC; // starts at BTC price level for chart readability
+        const out = [];
+        for (let i = anchorIdx; i < dates.length; i++) {
+            const btcRet = pricesUSD[i] / pricesUSD[i > 0 ? i - 1 : i];
+            const mstrRet = 1 + betaMult * (btcRet - 1);
+            mstrNorm = i === anchorIdx ? anchorBTC : mstrNorm * Math.max(0.01, mstrRet);
+            out.push({ x: dates[i], y: Math.round(mstrNorm * currencyRate) });
+        }
+        return out;
+    }
+    const mstrBeta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
+    const mstrDs = buildMstrDs(mstrBeta);
     const ma200wDs  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
     const mkTierDs = offset => dates.map((d, i) => ({ x: d, y: zSma[i] !== null ? zSma[i] + offset : null }));
     predLineUSD = generatePredictionLine(
@@ -383,7 +406,7 @@ async function init() {
     function autoScaleY(chart) {
         const { min: xMin, max: xMax } = chart.scales.x;
         let lo = Infinity, hi = -Infinity;
-        for (const dsIdx of [0, 6]) {
+        for (const dsIdx of [0, 6, 9]) {
             const ds = chart.data.datasets[dsIdx];
             if (!ds || ds.hidden) continue;
             for (const p of ds.data) {
@@ -564,7 +587,11 @@ async function init() {
                   pointStyle: 'rectRot', pointRadius: ptTrade, pointHoverRadius: ptTradeHover,
                   borderColor: '#ff8855', borderWidth: 2,
                   backgroundColor: '#ff5533cc',
-                  showLine: false, hidden: false }
+                  showLine: false, hidden: false },
+                // Dataset 9: MSTR simulated overlay (hidden by default)
+                { label: 'MSTR (sim)', data: mstrDs,
+                  borderColor: '#5577ffcc', borderWidth: 1.5, borderDash: [4, 3],
+                  pointRadius: 0, tension: 0.2, spanGaps: false, fill: false, hidden: true }
             ]
         },
         options: {
@@ -631,6 +658,10 @@ async function init() {
                             }
                             if (ctx.dataset.label === 'Cycle Prediction')
                                 return ` Predicted price: ~${fmtPrice(ctx.parsed.y)}`;
+                            if (ctx.dataset.label === 'MSTR (sim)') {
+                                const beta = parseFloat(document.getElementById('mstrLevMult')?.value) || 1.8;
+                                return ` MSTR simulated (${beta}× BTC): ~${fmtPrice(ctx.parsed.y)}`;
+                            }
                             if (ctx.dataset.label === 'My Buys') {
                                 const amt = ctx.raw.amount ? `  (${ctx.raw.amountFmt})` : '';
                                 return ` My Buy: ${fmtPrice(ctx.parsed.y)}${amt}`;
@@ -841,6 +872,21 @@ async function init() {
         const show = !this.classList.contains('active');
         this.classList.toggle('active');
         priceChart.data.datasets[6].hidden = !show;
+        priceChart.update('none');
+    });
+
+    // MSTR simulated overlay toggle
+    document.getElementById('toggleMSTR').addEventListener('click', function () {
+        const show = !this.classList.contains('active');
+        this.classList.toggle('active');
+        priceChart.data.datasets[9].hidden = !show;
+        priceChart.update('none');
+    });
+
+    // Rebuild MSTR overlay when beta multiplier changes
+    document.getElementById('mstrLevMult')?.addEventListener('change', () => {
+        const beta = parseFloat(document.getElementById('mstrLevMult').value) || 1.8;
+        priceChart.data.datasets[9].data = buildMstrDs(beta);
         priceChart.update('none');
     });
 
