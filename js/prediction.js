@@ -15,6 +15,11 @@ function generatePredictionLine(projectedTopUSD = 200000, projectedBottomUSD = 2
     const DAY  = 86400000;
     const STEP = 7 * DAY;   // weekly steps
 
+    // Start prediction from Jan 1 of the current year so users can compare
+    // the predicted shape against actual BTC price for the year-to-date period.
+    const tYearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+    const tStart = Math.min(tYearStart, tNow);
+
     // Interpolate USD price at an arbitrary timestamp from real data (log-linear)
     function interpPrice(ts) {
         if (ts < dates[0] || ts > dates[dates.length - 1]) return null;
@@ -28,14 +33,17 @@ function generatePredictionLine(projectedTopUSD = 200000, projectedBottomUSD = 2
         return pricesUSD[lo] * Math.pow(pricesUSD[hi] / pricesUSD[lo], frac);
     }
 
+    // Anchor the prediction at the actual BTC price on tStart (start of year)
+    const pStart = interpPrice(tStart) || pNow;
+
     // End at ~450 days past the 2028 halving (covers the next bull run top)
     const tEnd = halving2028 + 450 * DAY;
 
-    const pts = [{ x: tNow, y: Math.round(pNow) }];
-    let curPrice = pNow;
+    const pts = [{ x: tStart, y: Math.round(pStart) }];
+    let curPrice = pStart;
 
-    for (let t = tNow + STEP; t <= tEnd; t += STEP) {
-        const offsetMs  = t - halving2024;
+    for (let t = tStart + STEP; t <= tEnd; t += STEP) {
+        const offsetMs   = t - halving2024;
         const prevTs     = halving2020 + offsetMs;
         const prevTsPrev = prevTs - STEP;
 
@@ -65,15 +73,14 @@ function generatePredictionLine(projectedTopUSD = 200000, projectedBottomUSD = 2
 
     // Scale the trough region so the minimum of the predicted decline matches projectedBottomUSD.
     // Only adjust the bear phase (points below current price) to avoid distorting the bull run.
-    const bearPts = pts.filter(p => p.y < pNow);
+    const bearPts = pts.filter(p => p.y < pStart && p.x > tNow);
     if (bearPts.length > 0) {
         const rawBottom = Math.min(...bearPts.map(p => p.y));
         if (rawBottom > 0 && rawBottom !== projectedBottomUSD) {
             const scale = projectedBottomUSD / rawBottom;
             for (const p of pts) {
-                if (p.y < pNow) {
-                    // Blend the correction: full scale at the trough, taper off toward pNow
-                    const depth = Math.log(pNow / p.y) / Math.log(pNow / rawBottom); // 0→1 as price→bottom
+                if (p.y < pStart && p.x > tNow) {
+                    const depth = Math.log(pStart / p.y) / Math.log(pStart / rawBottom);
                     const s = Math.pow(scale, depth);
                     p.y = Math.round(p.y * s);
                 }

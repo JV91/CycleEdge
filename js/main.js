@@ -875,6 +875,13 @@ async function init() {
     document.getElementById('startYear').value = '2022';
 
     updateFromParams();
+
+    // Default zoom: current cycle view (Jan 2024 → Jan 2030)
+    const _zoomMin = new Date('2024-01-01').getTime();
+    const _zoomMax = new Date('2030-01-01').getTime();
+    priceChart.zoomScale('x', { min: _zoomMin, max: _zoomMax }, 'none');
+    indChart.zoomScale('x',   { min: _zoomMin, max: _zoomMax }, 'none');
+
     // Default to USD on load (overridden by saved settings if user changed it)
     const _savedSettings = (() => { try { return JSON.parse(localStorage.getItem('btcAppSettings') || '{}'); } catch { return {}; } })();
     await switchCurrency(_savedSettings.currency || 'USD');
