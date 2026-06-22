@@ -15,28 +15,9 @@ let mstrDataUSD = []; // real MSTR price history [{x, y}] in USD
 // ── Data fetching ─────────────────────────────────────────────────────────────
 
 async function fetchBTCHistory() {
-    const BASE = 'https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000';
-    const allData = [];
-    let toTs = null;
-
-    for (let i = 0; i < 3; i++) {
-        const url = BASE + (toTs ? `&toTs=${toTs}` : '');
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`CryptoCompare API error ${res.status}`);
-        const json = await res.json();
-        if (json.Response !== 'Success') throw new Error(json.Message || 'API error');
-        const pts = json.Data.Data;
-        if (!pts.length) break;
-        allData.push(...pts);
-        toTs = pts[0].time - 1;
-        if (pts.length < 2000) break;
-    }
-
-    const seen = new Set();
-    return allData
-        .filter(d => { if (seen.has(d.time) || d.close <= 0) return false; seen.add(d.time); return true; })
-        .sort((a, b) => a.time - b.time)
-        .map(d => ({ ts: d.time * 1000, price: d.close }));
+    const res = await fetch('data/btc.json');
+    if (!res.ok) throw new Error(`BTC data load error ${res.status}`);
+    return await res.json(); // [{ts: ms, price: usd}]
 }
 
 // ── MSTR data fetch ───────────────────────────────────────────────────────────
@@ -1042,10 +1023,11 @@ async function init() {
     // Extract poll function so settings.js can reschedule it
     async function _pollPrice() {
         try {
-            const resp = await fetch('https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD');
+            // Binance ticker — CORS-friendly, no auth required
+            const resp = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
             const json = await resp.json();
-            const latestUSD = json.USD;
-            if (!latestUSD) return;
+            const latestUSD = parseFloat(json.price);
+            if (!latestUSD || isNaN(latestUSD)) return;
 
             const todayTs = new Date().setHours(0,0,0,0);
             const lastIdx = dates.length - 1;
