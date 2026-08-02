@@ -357,8 +357,8 @@ async function init() {
     const ma200wDs  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
     const mkTierDs = offset => dates.map((d, i) => ({ x: d, y: zSma[i] !== null ? zSma[i] + offset : null }));
     predLineUSD = generatePredictionLine(
-        parseFloat(document.getElementById('siProjTopPrice')?.value) || 201521,
-        parseFloat(document.getElementById('siProjBottomPrice')?.value) || 27800
+        parseFloat(document.getElementById('siProjTopPrice')?.value) || 124659,
+        parseFloat(document.getElementById('siProjBottomPrice')?.value) || 35000
     );
     // predSignals built later in updateFromParams → rebuildPredSignals
     const predDs = predLineUSD.map(p => ({ x: p.x, y: p.y }));
@@ -882,8 +882,8 @@ async function init() {
 
     // Projected bottom/top price — regenerate prediction line and re-render strategy
     const rebuildPredLine = () => {
-        const projTop    = Math.max(50000, parseFloat(document.getElementById('siProjTopPrice').value)    || 201521);
-        const projBottom = Math.max(5000,  parseFloat(document.getElementById('siProjBottomPrice').value) || 27800);
+        const projTop    = Math.max(50000, parseFloat(document.getElementById('siProjTopPrice').value)    || 124659);
+        const projBottom = Math.max(5000,  parseFloat(document.getElementById('siProjBottomPrice').value) || 35000);
         predLineUSD = generatePredictionLine(projTop, projBottom);
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
         priceChart.update('none');
@@ -1041,8 +1041,8 @@ async function init() {
             }
 
             predLineUSD = generatePredictionLine(
-                parseFloat(document.getElementById('siProjTopPrice')?.value)    || 201521,
-                parseFloat(document.getElementById('siProjBottomPrice')?.value) || 27800
+                parseFloat(document.getElementById('siProjTopPrice')?.value)    || 124659,
+                parseFloat(document.getElementById('siProjBottomPrice')?.value) || 35000
             );
 
             applyStartFilter();
