@@ -24,9 +24,9 @@ function updateCycleClock() {
 
     const daysSinceHalving = Math.floor((now - halving2024) / DAY);
 
-    // Typical cycle: halving → top ~535d, top → bottom ~313d, total bear ~940d
+    // Typical cycle: halving → top ~535d (actual 2024 cycle), top → bottom ~365d, total ~900d
     const typicalTopDays    = 535;
-    const typicalCycleDays  = 940;   // halving to bottom of next bear
+    const typicalCycleDays  = 900;   // halving to bottom of next bear
     const cyclePct = Math.min(100, Math.round(daysSinceHalving / typicalCycleDays * 100));
 
     const daysToTop    = Math.max(0, Math.floor((predTop    - now) / DAY));
@@ -71,7 +71,7 @@ function updateCycleClock() {
     const pctOfTop    = Math.round(curPriceUSD / predTopUSD * 100);
 
     // ── Progress bar segments ─────────────────────────────────────────────────
-    // Phase widths as % of total cycle (940d)
+    // Phase widths as % of total cycle (900d)
     const bullPhasePct  = Math.round(typicalTopDays    / typicalCycleDays * 100); // ~57%
     const bearPhasePct  = 100 - bullPhasePct;                                      // ~43%
     const progressPct   = Math.min(100, daysSinceHalving / typicalCycleDays * 100);

@@ -5,7 +5,7 @@
 // (aligned by halving date) starting from current real price.
 // Source: bitbo.io/cycle-repeat — previous cycle shape scaled to current cycle.
 
-function generatePredictionLine(projectedTopUSD = 200000, projectedBottomUSD = 27800) {
+function generatePredictionLine(projectedTopUSD = 300000, projectedBottomUSD = 35000) {
     const halving2020 = new Date('2020-05-11').getTime();
     const halving2024 = new Date('2024-04-19').getTime();
     const halving2028 = new Date('2028-04-18').getTime();

@@ -4,8 +4,8 @@ const CYCLE_TOPS = [
     { x: new Date('2013-11-29').getTime(), y: 1150,   _yUSD: 1150,   daysFromHalving: 366, pct: '+57,400%', halvingYear: 2012, xAdjust: 68 },
     { x: new Date('2017-12-17').getTime(), y: 19800,  _yUSD: 19800,  daysFromHalving: 526, pct: '+13,133%', halvingYear: 2016, xAdjust: 0  },
     { x: new Date('2021-11-10').getTime(), y: 69000,  _yUSD: 69000,  daysFromHalving: 548, pct: '+2,126%',  halvingYear: 2020, xAdjust: 0  },
-    { x: new Date('2025-10-06').getTime(), y: 126000, _yUSD: 126000, daysFromHalving: 535, pct: '+713%',    halvingYear: 2024, xAdjust: 0  },
-    { x: new Date('2029-07-15').getTime(), y: 350000, _yUSD: 350000, daysFromHalving: 453, pct: '~+453%',  halvingYear: 2028, xAdjust: 0, predicted: true },
+    { x: new Date('2025-10-06').getTime(), y: 124659, _yUSD: 124659, daysFromHalving: 535, pct: '+712%',    halvingYear: 2024, xAdjust: 0  },
+    { x: new Date('2029-07-15').getTime(), y: 300000, _yUSD: 300000, daysFromHalving: 453, pct: '~+757%',  halvingYear: 2028, xAdjust: 0, predicted: true },
 ];
 const CYCLE_BOTTOMS = [
     { x: new Date('2015-01-14').getTime(), y: 150,   _yUSD: 150,   daysFromHalving: 777,  daysFromTop: 411, pct: '-87%',  halvingYear: 2012 },
@@ -37,5 +37,5 @@ const SI_EXITS = [
 ];
 
 const SI_PRED_BOTTOM = { ts: new Date('2026-10-06').getTime(), priceUSD: 35000 };
-const SI_PRED_TOP    = { ts: new Date('2029-07-15').getTime(), priceUSD: 124659 };
+const SI_PRED_TOP    = { ts: new Date('2029-07-15').getTime(), priceUSD: 300000 };
 const SI_HALVING     = { ts: new Date('2028-04-18').getTime() };
