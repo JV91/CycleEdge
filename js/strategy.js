@@ -16,6 +16,19 @@ function siMonthLabel(ts) {
     return new Date(ts).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 }
 
+// Format a value that's already in the display currency as its USD equivalent,
+// for the small secondary line under key strategy stats. Hidden when the
+// display currency already is USD.
+function siFmtUsdSub(valInDisplayCurrency) {
+    if (currencyRate === 1 || valInDisplayCurrency == null || !isFinite(valInDisplayCurrency)) return '';
+    const usd = valInDisplayCurrency / currencyRate;
+    const abs = Math.abs(usd);
+    const body = abs >= 1e6 ? (usd / 1e6).toFixed(2) + 'M'
+               : abs >= 1e3 ? Math.round(usd).toLocaleString()
+               : usd.toFixed(0);
+    return '≈ $' + body;
+}
+
 function siPhase(ts) {
     const tStop = siAddMonths(SI_PRED_TOP.ts, -parseInt(document.getElementById('siStopOffset').value));
     if (ts < SI_PRED_BOTTOM.ts + 30 * 86400000) return 'acc';   // accumulation (bear)
@@ -341,17 +354,25 @@ function renderStrategyDashboard() {
 
     // Update stats
     document.getElementById('siTotalInvest').textContent = fmtSI(totalInvested);
+    document.getElementById('siTotalInvestUsd').textContent = siFmtUsdSub(totalInvested);
     document.getElementById('siBTCAccum').textContent    = btcDirectHeld > 0 ? btcDirectHeld.toFixed(4) + ' BTC' : '—';
     document.getElementById('siAvgEntry').textContent    = btcAvgEntry > 0 ? fmtSI(btcAvgEntry) : '—';
+    document.getElementById('siAvgEntryUsd').textContent = btcAvgEntry > 0 ? siFmtUsdSub(btcAvgEntry) : '';
     document.getElementById('siTier1Val').textContent    = fmtSI(tierVals[0]);
+    document.getElementById('siTier1ValUsd').textContent = siFmtUsdSub(tierVals[0]);
     document.getElementById('siTier2Val').textContent    = fmtSI(tierVals[1]);
+    document.getElementById('siTier2ValUsd').textContent = siFmtUsdSub(tierVals[1]);
     document.getElementById('siTier3Val').textContent    = fmtSI(tierVals[2]);
+    document.getElementById('siTier3ValUsd').textContent = siFmtUsdSub(tierVals[2]);
     const holdParts = [`BTC ${Math.round(remainFracD * 100)}%`];
     if (remainFracLev  > 0) holdParts.push(`Lev ${Math.round(remainFracLev  * 100)}%`);
     if (remainFracMstr > 0) holdParts.push(`MSTR ${Math.round(remainFracMstr * 100)}%`);
     document.getElementById('siHoldLabel').textContent   = holdParts.join(' · ') + ' remaining';
-    document.getElementById('siHoldVal').textContent     = fmtSI(chartPts.holdingsOnly[chartPts.holdingsOnly.length - 1]?.y);
+    const holdVal = chartPts.holdingsOnly[chartPts.holdingsOnly.length - 1]?.y;
+    document.getElementById('siHoldVal').textContent     = fmtSI(holdVal);
+    document.getElementById('siHoldValUsd').textContent  = siFmtUsdSub(holdVal);
     document.getElementById('siPeakVal').textContent     = fmtSI(peakTotal);
+    document.getElementById('siPeakValUsd').textContent  = siFmtUsdSub(peakTotal);
     const ret = totalInvested > 0 ? ((peakTotal / totalInvested - 1) * 100) : 0;
     document.getElementById('siReturn').textContent      = ret > 0 ? '+' + Math.round(ret) + '%' : '—';
 

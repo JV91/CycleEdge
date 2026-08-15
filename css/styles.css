@@ -630,6 +630,7 @@ footer {
 .si-stat .sv.up { color: #00cc66; }
 .si-stat .sv.hi { color: #f7931a; }
 .si-stat .sv.lo { color: #5577ff; }
+.si-stat .svUsd { display: block; font-size: 0.72rem; font-weight: 400; color: #555; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .si-chart-box { height: 280px; position: relative; margin-bottom: 16px; }
 .si-table-wrap { overflow-x: auto; }
 .si-table {
@@ -1422,6 +1423,7 @@ footer {
 [data-theme="light"] .si-stat { background: #f4f4fc; border-color: #d8d8ec; }
 [data-theme="light"] .si-stat .sl { color: #999; }
 [data-theme="light"] .si-stat .sv { color: #1a1a2a; }
+[data-theme="light"] .si-stat .svUsd { color: #888; }
 
 /* Footer */
 [data-theme="light"] footer { color: #bbb; }
