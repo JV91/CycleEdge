@@ -6,7 +6,7 @@ const _SETTINGS_KEY = 'btcAppSettings';
 
 let _settings = {
     theme:            'dark',
-    currency:         'USD',
+    currency:         'CHF',
     updateInterval:   5,      // minutes; 0 = off
     notifications:    true
 };

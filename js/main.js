@@ -1068,7 +1068,7 @@ async function init() {
 
     // Default to USD on load (overridden by saved settings if user changed it)
     const _savedSettings = (() => { try { return JSON.parse(localStorage.getItem('btcAppSettings') || '{}'); } catch { return {}; } })();
-    await switchCurrency(_savedSettings.currency || 'USD');
+    await switchCurrency(_savedSettings.currency || 'CHF');
 
     if (typeof initCycleClock === 'function') initCycleClock();
 
