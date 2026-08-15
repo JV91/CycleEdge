@@ -15,10 +15,8 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
     const DAY  = 86400000;
     const STEP = 7 * DAY;   // weekly steps
 
-    // Start prediction from Jan 1 of the current year so users can compare
-    // the predicted shape against actual BTC price for the year-to-date period.
-    const tYearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
-    const tStart = Math.min(tYearStart, tNow);
+    // Start prediction from today (last real data point)
+    const tStart = tNow;
 
     // Interpolate USD price at an arbitrary timestamp from real data (log-linear)
     function interpPrice(ts) {
@@ -33,14 +31,11 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
         return pricesUSD[lo] * Math.pow(pricesUSD[hi] / pricesUSD[lo], frac);
     }
 
-    // Anchor the prediction at the actual BTC price on tStart (start of year)
-    const pStart = interpPrice(tStart) || pNow;
-
     // End at ~450 days past the 2028 halving (covers the next bull run top)
     const tEnd = halving2028 + 450 * DAY;
 
-    const pts = [{ x: tStart, y: Math.round(pStart) }];
-    let curPrice = pStart;
+    const pts = [{ x: tStart, y: Math.round(pNow) }];
+    let curPrice = pNow;
 
     for (let t = tStart + STEP; t <= tEnd; t += STEP) {
         const offsetMs   = t - halving2024;

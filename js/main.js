@@ -535,7 +535,8 @@ async function init() {
             borderDash: b.predicted ? [4, 3] : [],
             borderRadius: 4,
             padding: annotPad,
-            yAdjust: annotYAdjBot,
+            yValue: b.predicted && b.rangeHigh ? b.rangeHigh : b.y,
+            yAdjust: b.predicted ? -60 : annotYAdjBot,
             display: false
         };
         // Bottom range band for predicted bottoms (Cowen-informed: optimistic–pessimistic)
@@ -551,12 +552,7 @@ async function init() {
                 borderWidth: 1,
                 borderDash: [4, 3],
                 display: false,
-                label: {
-                    display: true,
-                    content: `Bear floor zone $${(b.rangeLow/1000).toFixed(0)}k–$${(b.rangeHigh/1000).toFixed(0)}k`,
-                    color: '#00ff8866',
-                    font: { size: annotSmFont }
-                }
+                label: { display: false }
             };
         }
     });
