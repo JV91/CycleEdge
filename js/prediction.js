@@ -68,14 +68,14 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
 
     // Scale the trough region so the minimum of the predicted decline matches projectedBottomUSD.
     // Only adjust the bear phase (points below current price) to avoid distorting the bull run.
-    const bearPts = pts.filter(p => p.y < pStart && p.x > tNow);
+    const bearPts = pts.filter(p => p.y < pNow && p.x > tNow);
     if (bearPts.length > 0) {
         const rawBottom = Math.min(...bearPts.map(p => p.y));
         if (rawBottom > 0 && rawBottom !== projectedBottomUSD) {
             const scale = projectedBottomUSD / rawBottom;
             for (const p of pts) {
-                if (p.y < pStart && p.x > tNow) {
-                    const depth = Math.log(pStart / p.y) / Math.log(pStart / rawBottom);
+                if (p.y < pNow && p.x > tNow) {
+                    const depth = Math.log(pNow / p.y) / Math.log(pNow / rawBottom);
                     const s = Math.pow(scale, depth);
                     p.y = Math.round(p.y * s);
                 }
