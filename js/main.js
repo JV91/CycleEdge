@@ -2,6 +2,7 @@
 
 let dates, prices, pricesUSD;
 let ma200wRaw = null;
+let ma300wRaw = null;
 let signals = [], zArr = [], zSma = [];
 let priceChart, indChart, yearChart;
 let chartStartIdx = 0;
@@ -266,6 +267,11 @@ async function switchCurrency(currency) {
             x: d, y: ma200wRaw[i] !== null ? ma200wRaw[i] * currencyRate : null
         }));
     }
+    if (ma300wRaw) {
+        priceChart.data.datasets[11].data = dates.map((d, i) => ({
+            x: d, y: ma300wRaw[i] !== null ? ma300wRaw[i] * currencyRate : null
+        }));
+    }
     if (predLineUSD) {
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
     }
@@ -393,6 +399,7 @@ async function init() {
     pricesUSD = [...prices];
     const priceDs = dates.map((d, i) => ({ x: d, y: prices[i] }));
     ma200wRaw = rollingMean(prices, 1400);
+    ma300wRaw = rollingMean(prices, 2100);
 
     // buildMstrDs and buildBtcReturnDs are module-scope (defined below init)
 
@@ -404,6 +411,7 @@ async function init() {
         console.warn('MSTR fetch failed:', e);
     }
     const ma200wDs  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
+    const ma300wDs  = dates.map((d, i) => ({ x: d, y: ma300wRaw[i] }));
     const mkTierDs = offset => dates.map((d, i) => ({ x: d, y: zSma[i] !== null ? zSma[i] + offset : null }));
     predLineUSD = generatePredictionLine(
         parseFloat(document.getElementById('siProjTopPrice')?.value) || 250000,
@@ -667,7 +675,11 @@ async function init() {
                 { label: 'BTC Return', data: buildBtcReturnDs(),
                   borderColor: '#f7931a66', borderWidth: 1, borderDash: [3, 3],
                   pointRadius: 0, tension: 0, spanGaps: false, fill: false,
-                  hidden: true, yAxisID: 'yReturn' }
+                  hidden: true, yAxisID: 'yReturn' },
+                // 300-week MA (index 11) — initially hidden
+                { label: '300W MA', data: ma300wDs,
+                  borderColor: '#cc44ffcc', borderWidth: 2, pointRadius: 0,
+                  tension: 0.3, spanGaps: false, fill: false, hidden: true }
             ]
         },
         options: {
@@ -931,6 +943,14 @@ async function init() {
         priceChart.update('none');
     });
 
+    // 300-Week MA toggle
+    document.getElementById('toggle300W').addEventListener('click', function () {
+        const show = !this.classList.contains('active');
+        this.classList.toggle('active');
+        priceChart.data.datasets[11].hidden = !show;
+        priceChart.update('none');
+    });
+
     // Tier level lines toggle
     document.getElementById('toggleTierLines').addEventListener('click', function () {
         const show = !this.classList.contains('active');
@@ -1028,6 +1048,7 @@ async function init() {
     priceChart.data.datasets[4].hidden = false; // cycle bottoms
     priceChart.data.datasets[5].hidden = false; // 200W MA
     priceChart.data.datasets[6].hidden = false; // prediction
+    // 300W MA (index 11) stays hidden by default — toggle it on via the button
     Object.values(topBottomLabels).forEach(a => { a.display = true; });
     Object.values(halvAnnots).forEach(a => { a.display = true; if (a.label) a.label.display = true; });
     Object.values(zoneAnnots).forEach(a => { a.display = true; });
