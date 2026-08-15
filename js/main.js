@@ -285,6 +285,28 @@ function updateFromParams() {
     rebuildPredSignals();
 }
 
+// ── MSTR / BTC return index builders (module scope so switchCurrency can call them) ──
+
+function buildMstrDs() {
+    if (!mstrDataUSD.length) return [];
+    const anchorTs   = new Date('2020-08-11').getTime();
+    const mstrAnchor = mstrDataUSD.find(p => p.x >= anchorTs);
+    if (!mstrAnchor) return [];
+    return mstrDataUSD
+        .filter(p => p.x >= anchorTs)
+        .map(p => ({ x: p.x, y: (p.y / mstrAnchor.y) * 100 }));
+}
+
+function buildBtcReturnDs() {
+    const anchorTs  = new Date('2020-08-11').getTime();
+    const anchorIdx = dates.findIndex(d => d >= anchorTs);
+    if (anchorIdx < 0) return [];
+    const anchorPrice = pricesUSD[anchorIdx];
+    return dates
+        .slice(anchorIdx)
+        .map((d, i) => ({ x: d, y: (pricesUSD[anchorIdx + i] / anchorPrice) * 100 }));
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -324,28 +346,7 @@ async function init() {
     const priceDs = dates.map((d, i) => ({ x: d, y: prices[i] }));
     ma200wRaw = rollingMean(prices, 1400);
 
-    // Fetch real MSTR stock price history.
-    // Plotted on a right "% return" axis both anchored to Aug 11 2020 = 100.
-    // This correctly shows MSTR's amplified swings vs BTC without dollar-scale distortion.
-    function buildMstrDs() {
-        if (!mstrDataUSD.length) return [];
-        const anchorTs   = new Date('2020-08-11').getTime();
-        const mstrAnchor = mstrDataUSD.find(p => p.x >= anchorTs);
-        if (!mstrAnchor) return [];
-        return mstrDataUSD
-            .filter(p => p.x >= anchorTs)
-            .map(p => ({ x: p.x, y: (p.y / mstrAnchor.y) * 100 }));
-    }
-
-    function buildBtcReturnDs() {
-        const anchorTs  = new Date('2020-08-11').getTime();
-        const anchorIdx = dates.findIndex(d => d >= anchorTs);
-        if (anchorIdx < 0) return [];
-        const anchorPrice = pricesUSD[anchorIdx];
-        return dates
-            .slice(anchorIdx)
-            .map((d, i) => ({ x: d, y: (pricesUSD[anchorIdx + i] / anchorPrice) * 100 }));
-    }
+    // buildMstrDs and buildBtcReturnDs are module-scope (defined below init)
 
     let mstrDs = [];
     try {
@@ -535,8 +536,8 @@ async function init() {
             borderDash: b.predicted ? [4, 3] : [],
             borderRadius: 4,
             padding: annotPad,
-            yValue: b.predicted && b.rangeHigh ? b.rangeHigh : b.y,
-            yAdjust: b.predicted ? -60 : annotYAdjBot,
+            yValue: b.predicted && b.rangeLow ? b.rangeLow : b.y,
+            yAdjust: b.predicted ? 70 : annotYAdjBot,
             display: false
         };
         // Bottom range band for predicted bottoms (Cowen-informed: optimistic–pessimistic)
