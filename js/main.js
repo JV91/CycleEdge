@@ -357,8 +357,8 @@ async function init() {
     const ma200wDs  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
     const mkTierDs = offset => dates.map((d, i) => ({ x: d, y: zSma[i] !== null ? zSma[i] + offset : null }));
     predLineUSD = generatePredictionLine(
-        parseFloat(document.getElementById('siProjTopPrice')?.value) || 300000,
-        parseFloat(document.getElementById('siProjBottomPrice')?.value) || 35000
+        parseFloat(document.getElementById('siProjTopPrice')?.value) || 250000,
+        parseFloat(document.getElementById('siProjBottomPrice')?.value) || 52000
     );
     // predSignals built later in updateFromParams → rebuildPredSignals
     const predDs = predLineUSD.map(p => ({ x: p.x, y: p.y }));
@@ -524,7 +524,7 @@ async function init() {
             yScaleID: 'y',
             xScaleID: 'x',
             content: b.predicted
-                ? [`Bottom ${new Date(b.x).getFullYear()} (predicted)`, `~${fmtPrice(b.y)}`, `~+${b.daysFromHalving}d from halving`, `~${b.daysFromTop}d from top`, b.pct]
+                ? [`Bottom ${new Date(b.x).getFullYear()} (predicted)`, `~${fmtPrice(b.y)} base`, `range ${fmtPrice(b.rangeLow)}–${fmtPrice(b.rangeHigh)}`, `~${b.daysFromTop}d from top`, b.pct]
                 : [`Bottom ${new Date(b.x).getFullYear()}`, fmtPrice(b.y), `+${b.daysFromHalving}d from halving`, `${b.daysFromTop}d from top`, b.pct],
             color: '#ffffff',
             font: [{ size: annotFont, weight: 'bold' }, { size: annotFont, weight: 'bold' }, { size: annotSmFont }, { size: annotSmFont }, { size: annotSmFont }],
@@ -538,6 +538,27 @@ async function init() {
             yAdjust: annotYAdjBot,
             display: false
         };
+        // Bottom range band for predicted bottoms (Cowen-informed: optimistic–pessimistic)
+        if (b.predicted && b.rangeLow && b.rangeHigh) {
+            const xPad = 60 * 86400000; // ±60 days around bottom date
+            topBottomLabels[`botRange${i}`] = {
+                type: 'box',
+                xMin: b.x - xPad, xMax: b.x + xPad,
+                yMin: b.rangeLow,  yMax: b.rangeHigh,
+                yScaleID: 'y', xScaleID: 'x',
+                backgroundColor: '#00ff8808',
+                borderColor: '#00ff8833',
+                borderWidth: 1,
+                borderDash: [4, 3],
+                display: false,
+                label: {
+                    display: true,
+                    content: `Bear floor zone $${(b.rangeLow/1000).toFixed(0)}k–$${(b.rangeHigh/1000).toFixed(0)}k`,
+                    color: '#00ff8866',
+                    font: { size: annotSmFont }
+                }
+            };
+        }
     });
 
     priceChart = new Chart(priceCanvas.getContext('2d'), {
@@ -882,8 +903,8 @@ async function init() {
 
     // Projected bottom/top price — regenerate prediction line and re-render strategy
     const rebuildPredLine = () => {
-        const projTop    = Math.max(50000, parseFloat(document.getElementById('siProjTopPrice').value)    || 300000);
-        const projBottom = Math.max(5000,  parseFloat(document.getElementById('siProjBottomPrice').value) || 35000);
+        const projTop    = Math.max(50000, parseFloat(document.getElementById('siProjTopPrice').value)    || 250000);
+        const projBottom = Math.max(5000,  parseFloat(document.getElementById('siProjBottomPrice').value) || 52000);
         predLineUSD = generatePredictionLine(projTop, projBottom);
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
         priceChart.update('none');
@@ -1041,8 +1062,8 @@ async function init() {
             }
 
             predLineUSD = generatePredictionLine(
-                parseFloat(document.getElementById('siProjTopPrice')?.value)    || 300000,
-                parseFloat(document.getElementById('siProjBottomPrice')?.value) || 35000
+                parseFloat(document.getElementById('siProjTopPrice')?.value)    || 250000,
+                parseFloat(document.getElementById('siProjBottomPrice')?.value) || 52000
             );
 
             applyStartFilter();

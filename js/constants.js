@@ -5,13 +5,13 @@ const CYCLE_TOPS = [
     { x: new Date('2017-12-17').getTime(), y: 19800,  _yUSD: 19800,  daysFromHalving: 526, pct: '+13,133%', halvingYear: 2016, xAdjust: 0  },
     { x: new Date('2021-11-10').getTime(), y: 69000,  _yUSD: 69000,  daysFromHalving: 548, pct: '+2,126%',  halvingYear: 2020, xAdjust: 0  },
     { x: new Date('2025-10-06').getTime(), y: 124659, _yUSD: 124659, daysFromHalving: 535, pct: '+712%',    halvingYear: 2024, xAdjust: 0  },
-    { x: new Date('2029-07-15').getTime(), y: 300000, _yUSD: 300000, daysFromHalving: 453, pct: '~+757%',  halvingYear: 2028, xAdjust: 0, predicted: true },
+    { x: new Date('2029-07-15').getTime(), y: 250000, _yUSD: 250000, daysFromHalving: 453, pct: '~+381%',  halvingYear: 2028, xAdjust: 0, predicted: true },
 ];
 const CYCLE_BOTTOMS = [
     { x: new Date('2015-01-14').getTime(), y: 150,   _yUSD: 150,   daysFromHalving: 777,  daysFromTop: 411, pct: '-87%',  halvingYear: 2012 },
     { x: new Date('2018-12-15').getTime(), y: 3100,  _yUSD: 3100,  daysFromHalving: 889,  daysFromTop: 363, pct: '-84%',  halvingYear: 2016 },
     { x: new Date('2022-11-21').getTime(), y: 15500, _yUSD: 15500, daysFromHalving: 924,  daysFromTop: 376, pct: '-78%',  halvingYear: 2020 },
-    { x: new Date('2026-10-06').getTime(), y: 35000, _yUSD: 35000, daysFromHalving: 900,  daysFromTop: 365, pct: '~-72%', halvingYear: 2024, predicted: true },
+    { x: new Date('2026-10-06').getTime(), y: 52000, _yUSD: 52000, daysFromHalving: 900,  daysFromTop: 365, pct: '~-58%', halvingYear: 2024, predicted: true, rangeHigh: 63000, rangeLow: 42000 },
 ];
 const HALVINGS = [
     { ts: new Date('2012-11-28').getTime(), label: 'Halving 2012' },
@@ -36,6 +36,6 @@ const SI_EXITS = [
     // keep 10% forever
 ];
 
-const SI_PRED_BOTTOM = { ts: new Date('2026-10-06').getTime(), priceUSD: 35000 };
-const SI_PRED_TOP    = { ts: new Date('2029-07-15').getTime(), priceUSD: 300000 };
+const SI_PRED_BOTTOM = { ts: new Date('2026-10-06').getTime(), priceUSD: 52000, rangeLow: 42000, rangeHigh: 63000 };
+const SI_PRED_TOP    = { ts: new Date('2029-07-15').getTime(), priceUSD: 250000 };
 const SI_HALVING     = { ts: new Date('2028-04-18').getTime() };

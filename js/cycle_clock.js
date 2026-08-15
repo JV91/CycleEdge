@@ -70,14 +70,47 @@ function updateCycleClock() {
     const predTopUSD  = SI_PRED_TOP.priceUSD;
     const pctOfTop    = Math.round(curPriceUSD / predTopUSD * 100);
 
+    // ── 200W MA (power-law floor) ─────────────────────────────────────────────
+    const WIN200W = 1400;
+    let ma200w = null;
+    if (pricesUSD.length >= WIN200W) {
+        let s = 0;
+        for (let i = pricesUSD.length - WIN200W; i < pricesUSD.length; i++) s += pricesUSD[i];
+        ma200w = s / WIN200W;
+    }
+    const ma200wRatio = ma200w ? curPriceUSD / ma200w : null;
+    // Historical bottom ratios: 2015=0.78, 2018=0.98, 2022=0.65 — avg ~0.80
+    const atMaFloor = ma200wRatio !== null && ma200wRatio < 1.05;
+
+    // ── Power law ratio (Cowen HTF model) ────────────────────────────────────
+    // ln(P) = -37.3954 + 5.6116 * ln(days since genesis)
+    const genesisMs = new Date('2009-01-03').getTime();
+    const tDays = (now - genesisMs) / DAY;
+    const plFairValue = Math.exp(-37.3954 + 5.6116 * Math.log(tDays));
+    const plRatio = curPriceUSD / plFairValue;
+    // Historical bottoms: 0.455 (2015), 0.567 (2018), 0.436 (2022) — we're at ~0.47 = bottom zone
+
+    // ── Bottom zone context ───────────────────────────────────────────────────
+    const pastBottom  = now > predBottom;
+    const nearBottom  = !pastBottom && daysToBottom < 120;
+    const inBottomZone = plRatio < 0.55 && atMaFloor;
+
     // ── Progress bar segments ─────────────────────────────────────────────────
     // Phase widths as % of total cycle (900d)
-    const bullPhasePct  = Math.round(typicalTopDays    / typicalCycleDays * 100); // ~57%
-    const bearPhasePct  = 100 - bullPhasePct;                                      // ~43%
+    const bullPhasePct  = Math.round(typicalTopDays    / typicalCycleDays * 100); // ~59%
+    const bearPhasePct  = 100 - bullPhasePct;
     const progressPct   = Math.min(100, daysSinceHalving / typicalCycleDays * 100);
 
     // Are we past predicted top already?
     const pastTop = now > predTop;
+
+    // ── Advice text ───────────────────────────────────────────────────────────
+    let adviceText = zoneDesc;
+    if (inBottomZone) {
+        adviceText = `Power law ratio ${plRatio.toFixed(2)}× (bottoms historically 0.44–0.57×) and price at 200W MA — this IS the bear floor zone. Cowen model: bottom range $${(SI_PRED_BOTTOM.rangeLow/1000).toFixed(0)}k–$${(SI_PRED_BOTTOM.rangeHigh/1000).toFixed(0)}k.`;
+    } else if (nearBottom && !inBottomZone) {
+        adviceText = `Approaching predicted bear bottom zone ($${(SI_PRED_BOTTOM.rangeLow/1000).toFixed(0)}k–$${(SI_PRED_BOTTOM.rangeHigh/1000).toFixed(0)}k). Power law ratio: ${plRatio.toFixed(2)}×.`;
+    }
 
     el.innerHTML = `
         <div class="cc-header">
@@ -108,9 +141,21 @@ function updateCycleClock() {
             </div>
 
             <div class="cc-card">
-                <div class="cc-card-label">Price vs Pred. Top</div>
-                <div class="cc-card-value" style="color:${pctOfTop > 80 ? '#ff4444' : pctOfTop > 50 ? '#f7931a' : '#00cc66'}">${pctOfTop}%</div>
-                <div class="cc-card-sub">of ~${fmtPrice(predTopUSD)} target</div>
+                <div class="cc-card-label">${pastBottom ? 'Days Past Bottom' : 'Days to Pred. Bottom'}</div>
+                <div class="cc-card-value" style="color:${inBottomZone ? '#00ff88' : pastBottom ? '#aaa' : '#5599ff'}">${pastBottom ? Math.floor((now - predBottom)/DAY).toLocaleString() : daysToBottom.toLocaleString()}</div>
+                <div class="cc-card-sub">${fmtDate(predBottom)} · $${(SI_PRED_BOTTOM.rangeLow/1000).toFixed(0)}k–$${(SI_PRED_BOTTOM.rangeHigh/1000).toFixed(0)}k range</div>
+            </div>
+
+            <div class="cc-card">
+                <div class="cc-card-label">Power Law Ratio</div>
+                <div class="cc-card-value" style="color:${plRatio < 0.55 ? '#00ff88' : plRatio < 0.80 ? '#00cc66' : plRatio < 1.20 ? '#f7931a' : '#ff4444'}">${plRatio.toFixed(2)}×</div>
+                <div class="cc-card-sub">bottoms: 0.44–0.57× fair value</div>
+            </div>
+
+            <div class="cc-card">
+                <div class="cc-card-label">200W MA</div>
+                <div class="cc-card-value" style="color:${atMaFloor ? '#00ff88' : '#f7931a'}">${ma200w ? fmtPrice(ma200w) : '—'}</div>
+                <div class="cc-card-sub">${ma200wRatio !== null ? (ma200wRatio >= 1 ? '+' : '') + ((ma200wRatio - 1)*100).toFixed(0) + '% vs MA floor' : 'historical bear floor'}</div>
             </div>
 
             <div class="cc-card">
@@ -145,8 +190,8 @@ function updateCycleClock() {
         </div>
 
         <div class="cc-advice">
-            <span class="cc-advice-icon" style="color:${zoneColor}">●</span>
-            <span>${zoneDesc}</span>
+            <span class="cc-advice-icon" style="color:${inBottomZone ? '#00ff88' : zoneColor}">●</span>
+            <span>${adviceText}</span>
             ${curSig === 'buy'
                 ? ' The momentum signal is <strong style="color:#00ff88">active</strong> — strategy is in the market.'
                 : ' The momentum signal is <strong style="color:#ff4444">inactive</strong> — strategy is in cash.'}
