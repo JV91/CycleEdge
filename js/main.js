@@ -169,23 +169,71 @@ function applyStartFilter() {
     priceChart.update('none');
 }
 
+// Keep the predicted Top/Bottom markers (CYCLE_TOPS/CYCLE_BOTTOMS last entry)
+// in sync with the actual predLineUSD curve, so the annotation box never
+// drifts from where the dashed prediction line really peaks/troughs.
+function syncPredictedCycleMarkers() {
+    if (!predLineUSD || predLineUSD.length === 0) return;
+
+    let topPt = predLineUSD[0], botPt = predLineUSD[0];
+    for (const p of predLineUSD) {
+        if (p.y > topPt.y) topPt = p;
+        if (p.y < botPt.y) botPt = p;
+    }
+
+    const top = CYCLE_TOPS[CYCLE_TOPS.length - 1];
+    if (top && top.predicted) {
+        top.x = topPt.x;
+        top.y = topPt.y * currencyRate;
+        top._yUSD = topPt.y;
+    }
+
+    const bot = CYCLE_BOTTOMS[CYCLE_BOTTOMS.length - 1];
+    if (bot && bot.predicted) {
+        const rangeWidthUSD = (bot.rangeHigh - bot.rangeLow) / 2;
+        bot.x = botPt.x;
+        bot.y = botPt.y * currencyRate;
+        bot._yUSD = botPt.y;
+        bot.rangeLow  = Math.max(0, botPt.y - rangeWidthUSD);
+        bot.rangeHigh = botPt.y + rangeWidthUSD;
+    }
+}
+
 function rebuildTopBottomLabels() {
+    syncPredictedCycleMarkers();
+
     CYCLE_TOPS.forEach((t, i) => {
         if (!topBottomLabels[`topLbl${i}`]) return;
         topBottomLabels[`topLbl${i}`].content = t.predicted
             ? [`Top ${new Date(t.x).getFullYear()} (predicted)`, `~${fmtPrice(t.y)}`, `~+${t.daysFromHalving}d from halving`, t.pct]
             : [`Top ${new Date(t.x).getFullYear()}`, fmtPrice(t.y), `+${t.daysFromHalving}d from halving`, t.pct];
+        topBottomLabels[`topLbl${i}`].xValue = t.x;
         topBottomLabels[`topLbl${i}`].yValue = t.y;
     });
     CYCLE_BOTTOMS.forEach((b, i) => {
         if (!topBottomLabels[`botLbl${i}`]) return;
         topBottomLabels[`botLbl${i}`].content = b.predicted
-            ? [`Bottom ${new Date(b.x).getFullYear()} (predicted)`, `~${fmtPrice(b.y)}`,
-               `~+${b.daysFromHalving}d from halving`, `~${b.daysFromTop}d from top`, b.pct]
+            ? [`Bottom ${new Date(b.x).getFullYear()} (predicted)`, `~${fmtPrice(b.y)} base`,
+               `range ${fmtPrice(b.rangeLow)}–${fmtPrice(b.rangeHigh)}`, `~${b.daysFromTop}d from top`, b.pct]
             : [`Bottom ${new Date(b.x).getFullYear()}`, fmtPrice(b.y),
                `+${b.daysFromHalving}d from halving`, `${b.daysFromTop}d from top`, b.pct];
-        topBottomLabels[`botLbl${i}`].yValue = b.y;
+        topBottomLabels[`botLbl${i}`].xValue = b.x;
+        topBottomLabels[`botLbl${i}`].yValue = b.predicted && b.rangeLow ? b.rangeLow : b.y;
+
+        const rangeBox = topBottomLabels[`botRange${i}`];
+        if (rangeBox && b.predicted && b.rangeLow && b.rangeHigh) {
+            const xPad = 60 * 86400000;
+            rangeBox.xMin = b.x - xPad;
+            rangeBox.xMax = b.x + xPad;
+            rangeBox.yMin = b.rangeLow;
+            rangeBox.yMax = b.rangeHigh;
+        }
     });
+
+    if (priceChart) {
+        priceChart.data.datasets[3].data = CYCLE_TOPS.map(t => ({ x: t.x, y: t.y }));
+        priceChart.data.datasets[4].data = CYCLE_BOTTOMS.map(b => ({ x: b.x, y: b.y }));
+    }
 }
 
 async function switchCurrency(currency) {
@@ -361,6 +409,7 @@ async function init() {
         parseFloat(document.getElementById('siProjTopPrice')?.value) || 250000,
         parseFloat(document.getElementById('siProjBottomPrice')?.value) || 52000
     );
+    syncPredictedCycleMarkers();
     // predSignals built later in updateFromParams → rebuildPredSignals
     const predDs = predLineUSD.map(p => ({ x: p.x, y: p.y }));
 
@@ -903,6 +952,7 @@ async function init() {
         const projTop    = Math.max(50000, parseFloat(document.getElementById('siProjTopPrice').value)    || 250000);
         const projBottom = Math.max(5000,  parseFloat(document.getElementById('siProjBottomPrice').value) || 52000);
         predLineUSD = generatePredictionLine(projTop, projBottom);
+        rebuildTopBottomLabels();
         priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
         priceChart.update('none');
         rebuildPredSignals(); // also calls renderStrategyDashboard
@@ -1062,6 +1112,7 @@ async function init() {
                 parseFloat(document.getElementById('siProjTopPrice')?.value)    || 250000,
                 parseFloat(document.getElementById('siProjBottomPrice')?.value) || 52000
             );
+            rebuildTopBottomLabels();
 
             applyStartFilter();
             priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
