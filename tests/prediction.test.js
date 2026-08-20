@@ -26,16 +26,23 @@ function makePriceHistory(endDate = new Date('2026-01-01')) {
     return { testDates, testPrices };
 }
 
-const tNow = new Date('2026-01-01').getTime();
 const { testDates, testPrices } = makePriceHistory(new Date('2026-01-01'));
-const pNow = testPrices[testPrices.length - 1];
+
+// generatePredictionLine anchors on the last non-predicted CYCLE_TOPS entry,
+// not on "today" — mirror that here with a fixed top price/date.
+const lastRealTop = { x: new Date('2025-10-06').getTime(), y: 60000, _yUSD: 60000, halvingYear: 2024, predicted: false };
+const predictedTop = { x: new Date('2029-07-15').getTime(), y: 250000, _yUSD: 250000, predicted: true };
+const tTop = lastRealTop.x;
+const pTop = lastRealTop._yUSD;
 
 function makeCtx() {
-    return load(makeContext({
+    const ctx = makeContext({
         dates: testDates,
         pricesUSD: testPrices,
         predLineUSD: null,
-    }), 'prediction.js');
+        CYCLE_TOPS: [lastRealTop, predictedTop],
+    });
+    return load(ctx, 'prediction.js');
 }
 
 // ── generatePredictionLine tests ──────────────────────────────────────────────
@@ -45,12 +52,12 @@ describe('generatePredictionLine', () => {
         pts = makeCtx().generatePredictionLine(201521, 27800);
     });
 
-    it('starts at the current price', () => {
-        expect(pts[0].y).toBe(pNow);
+    it('starts at the last real cycle top price', () => {
+        expect(pts[0].y).toBe(pTop);
     });
 
-    it('x values start from tNow', () => {
-        expect(pts[0].x).toBe(tNow);
+    it('x values start from the last real cycle top date', () => {
+        expect(pts[0].x).toBe(tTop);
     });
 
     it('produces weekly points (spacing = 7 days)', () => {
@@ -79,14 +86,14 @@ describe('generatePredictionLine', () => {
         }
     });
 
-    it('has a bear phase that dips below current price', () => {
-        const bearPts = pts.filter(p => p.y < pNow);
+    it('has a bear phase that dips below the cycle top price', () => {
+        const bearPts = pts.filter(p => p.y < pTop);
         expect(bearPts.length).toBeGreaterThan(0);
     });
 
     it('minimum of bear phase is close to projectedBottomUSD (within 5%)', () => {
         const projBottom = 27800;
-        const bearMin = Math.min(...pts.filter(p => p.y < pNow).map(p => p.y));
+        const bearMin = Math.min(...pts.filter(p => p.y < pTop).map(p => p.y));
         expect(bearMin).toBeGreaterThan(projBottom * 0.95);
         expect(bearMin).toBeLessThan(projBottom * 1.05);
     });
@@ -95,13 +102,13 @@ describe('generatePredictionLine', () => {
         const ctx = makeCtx();
         const pts1 = ctx.generatePredictionLine(201521, 27800);
         const pts2 = ctx.generatePredictionLine(201521, 40000);
-        const min1 = Math.min(...pts1.filter(p => p.y < pNow).map(p => p.y));
-        const min2 = Math.min(...pts2.filter(p => p.y < pNow).map(p => p.y));
+        const min1 = Math.min(...pts1.filter(p => p.y < pTop).map(p => p.y));
+        const min2 = Math.min(...pts2.filter(p => p.y < pTop).map(p => p.y));
         expect(min2).toBeGreaterThan(min1);
     });
 
-    it('has a recovery phase where prices climb above pNow again', () => {
-        const recoveryPts = pts.filter(p => p.x > new Date('2027-01-01').getTime() && p.y > pNow);
+    it('has a recovery phase where prices climb above the top again', () => {
+        const recoveryPts = pts.filter(p => p.x > new Date('2027-01-01').getTime() && p.y > pTop);
         expect(recoveryPts.length).toBeGreaterThan(0);
     });
 

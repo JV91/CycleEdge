@@ -10,13 +10,16 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
     const halving2024 = new Date('2024-04-19').getTime();
     const halving2028 = new Date('2028-04-18').getTime();
 
-    const tNow = dates[dates.length - 1];
-    const pNow = pricesUSD[pricesUSD.length - 1];
     const DAY  = 86400000;
     const STEP = 7 * DAY;   // weekly steps
 
-    // Start prediction from today (last real data point)
-    const tStart = tNow;
+    // Anchor the curve at the last actual (non-predicted) cycle top, not
+    // "today" — so the dashed line replays the whole modeled decline+recovery
+    // shape from the top through today into the future, rather than jumping
+    // to wherever real price happens to be right now.
+    const lastRealTop = CYCLE_TOPS.filter(t => !t.predicted).slice(-1)[0];
+    const tStart = lastRealTop.x;
+    const pStart = lastRealTop._yUSD;
 
     // Interpolate USD price at an arbitrary timestamp from real data (log-linear)
     function interpPrice(ts) {
@@ -34,8 +37,8 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
     // End at ~450 days past the 2028 halving (covers the next bull run top)
     const tEnd = halving2028 + 450 * DAY;
 
-    const pts = [{ x: tStart, y: Math.round(pNow) }];
-    let curPrice = pNow;
+    const pts = [{ x: tStart, y: Math.round(pStart) }];
+    let curPrice = pStart;
 
     for (let t = tStart + STEP; t <= tEnd; t += STEP) {
         const offsetMs   = t - halving2024;
@@ -67,15 +70,15 @@ function generatePredictionLine(projectedTopUSD = 250000, projectedBottomUSD = 5
     }
 
     // Scale the trough region so the minimum of the predicted decline matches projectedBottomUSD.
-    // Only adjust the bear phase (points below current price) to avoid distorting the bull run.
-    const bearPts = pts.filter(p => p.y < pNow && p.x > tNow);
+    // Only adjust the bear phase (points below the top) to avoid distorting the bull run.
+    const bearPts = pts.filter(p => p.y < pStart && p.x > tStart);
     if (bearPts.length > 0) {
         const rawBottom = Math.min(...bearPts.map(p => p.y));
         if (rawBottom > 0 && rawBottom !== projectedBottomUSD) {
             const scale = projectedBottomUSD / rawBottom;
             for (const p of pts) {
-                if (p.y < pNow && p.x > tNow) {
-                    const depth = Math.log(pNow / p.y) / Math.log(pNow / rawBottom);
+                if (p.y < pStart && p.x > tStart) {
+                    const depth = Math.log(pStart / p.y) / Math.log(pStart / rawBottom);
                     const s = Math.pow(scale, depth);
                     p.y = Math.round(p.y * s);
                 }
