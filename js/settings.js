@@ -28,6 +28,7 @@ function initSettings() {
 // Called by main.js after charts are built to kick off polling
 function startPricePolling(pollFn) {
     _pollFn = pollFn;
+    _pollFn(); // fetch immediately so the chart isn't stuck on stale bundled data until the first interval tick
     _restartPoll();
 }
 

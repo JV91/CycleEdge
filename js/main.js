@@ -1109,13 +1109,32 @@ async function init() {
     // Track last known signal to detect changes
     let _lastKnownSignal = null;
 
+    // Fetch current BTC/USD price. Binance first (fast, no auth); if that
+    // fails or is geo-blocked, fall back to CoinGecko's simple price endpoint
+    // (also CORS-friendly, no auth, different infra so failures shouldn't correlate).
+    async function _fetchLiveBTCPrice() {
+        try {
+            const resp = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+            if (!resp.ok) throw new Error('Binance ' + resp.status);
+            const json = await resp.json();
+            const v = parseFloat(json.price);
+            if (v && !isNaN(v)) return v;
+            throw new Error('Binance: bad payload');
+        } catch (e) {
+            console.warn('Binance price fetch failed, trying CoinGecko:', e.message);
+            const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+            if (!resp.ok) throw new Error('CoinGecko ' + resp.status);
+            const json = await resp.json();
+            const v = json?.bitcoin?.usd;
+            if (v && !isNaN(v)) return v;
+            throw new Error('CoinGecko: bad payload');
+        }
+    }
+
     // Extract poll function so settings.js can reschedule it
     async function _pollPrice() {
         try {
-            // Binance ticker — CORS-friendly, no auth required
-            const resp = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-            const json = await resp.json();
-            const latestUSD = parseFloat(json.price);
+            const latestUSD = await _fetchLiveBTCPrice();
             if (!latestUSD || isNaN(latestUSD)) return;
 
             const todayTs = new Date().setHours(0,0,0,0);
@@ -1164,6 +1183,11 @@ async function init() {
             }
         } catch(e) {
             console.warn('Price poll failed:', e);
+            const badge = document.getElementById('liveBadge');
+            if (badge) {
+                badge.textContent = 'LIVE update failed · retrying';
+                badge.style.opacity = '1';
+            }
         }
     }
 
