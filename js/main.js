@@ -1154,10 +1154,14 @@ async function init() {
             );
             rebuildTopBottomLabels();
 
-            applyStartFilter();
+            // Recompute signals/z-score arrays so they stay in sync with the
+            // possibly-appended price point — updateFromParams() also calls
+            // updateCurrentStats() and refreshes the indicator chart.
+            updateFromParams();
+
+            priceChart.data.datasets[0].data = dates.map((d, i) => ({ x: d, y: prices[i] }));
             priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
             priceChart.update('none');
-            updateCurrentStats();
             renderStrategyDashboard();
 
             if (typeof renderPortfolioEntries === 'function') renderPortfolioEntries();
