@@ -1159,6 +1159,14 @@ async function init() {
             // updateCurrentStats() and refreshes the indicator chart.
             updateFromParams();
 
+            // Recompute moving averages too — same staleness issue: rollingMean
+            // output was only ever computed once at initial load, so the 200W/300W
+            // MA lines would silently stop at the old last index otherwise.
+            ma200wRaw = rollingMean(prices, 1400);
+            ma300wRaw = rollingMean(prices, 2100);
+            priceChart.data.datasets[5].data  = dates.map((d, i) => ({ x: d, y: ma200wRaw[i] }));
+            priceChart.data.datasets[11].data = dates.map((d, i) => ({ x: d, y: ma300wRaw[i] }));
+
             priceChart.data.datasets[0].data = dates.map((d, i) => ({ x: d, y: prices[i] }));
             priceChart.data.datasets[6].data = predLineUSD.map(p => ({ x: p.x, y: p.y * currencyRate }));
             priceChart.update('none');
